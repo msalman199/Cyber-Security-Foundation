@@ -1,0 +1,266 @@
+Networking Basics with IP Tools
+Objectives
+By the end of this lab, you will be able to:
+
+• Understand IP addressing concepts and view network interface configurations • Test network connectivity using ping and traceroute commands • Explore DNS resolution using nslookup and dig tools • Analyze network paths and troubleshoot basic connectivity issues • Interpret network command outputs for cybersecurity analysis
+
+Prerequisites
+Before starting this lab, you should have:
+
+• Basic familiarity with Linux command line interface • Understanding of what an IP address is (basic concept) • Knowledge of how to open a terminal window • No prior networking experience required - we'll learn as we go
+
+Lab Environment Setup
+Good News! Al Nafi provides ready-to-use Linux-based cloud machines for this lab. Simply:
+
+Click Start Lab button
+Wait for your Linux machine to initialize
+Open the terminal when prompted
+You're ready to begin!
+No need to build your own virtual machine or configure any additional software. All required networking tools are pre-installed on your Linux system.
+
+Task 1: Understanding Your Network Interface Configuration
+Subtask 1.1: View Network Interfaces Using Modern Commands
+Let's start by examining your machine's network configuration using current Linux commands.
+
+Step 1: Open your terminal and run the modern IP command to view all network interfaces:
+
+ip addr show
+Step 2: For a cleaner output, you can use the shortened version:
+
+ip a
+What You're Seeing: • lo (loopback): Internal interface for local communication • eth0 or enp0s3: Your main network interface • inet: Shows IPv4 addresses • inet6: Shows IPv6 addresses
+
+Subtask 1.2: Using the Traditional ifconfig Command
+Step 3: Now let's use the traditional ifconfig command (still widely used):
+
+ifconfig
+If ifconfig is not available, install it:
+
+sudo apt update
+sudo apt install net-tools -y
+ifconfig
+Step 4: View only active interfaces:
+
+ifconfig -a
+Subtask 1.3: Understanding Your IP Address
+Step 5: Let's focus on your main network interface. Run this command to see just your primary IP:
+
+hostname -I
+Step 6: Get more detailed information about your default route:
+
+ip route show
+Key Information to Note: • Your IP address (usually starts with 192.168, 10.0, or 172.16-31) • Your subnet mask (often /24 or 255.255.255.0) • Your default gateway (where traffic goes to reach the internet)
+
+Task 2: Testing Network Connectivity
+Subtask 2.1: Basic Ping Testing
+Step 7: Test connectivity to your own machine (loopback test):
+
+ping -c 4 127.0.0.1
+The -c 4 flag sends exactly 4 ping packets, then stops.
+
+Step 8: Test connectivity to your default gateway. First, find your gateway:
+
+ip route | grep default
+Step 9: Ping your gateway (replace X.X.X.X with your actual gateway IP):
+
+ping -c 4 [your_gateway_ip]
+Example:
+
+ping -c 4 192.168.1.1
+Subtask 2.2: Testing Internet Connectivity
+Step 10: Test connectivity to a reliable public DNS server:
+
+ping -c 4 8.8.8.8
+Step 11: Test connectivity to a well-known website:
+
+ping -c 4 google.com
+Understanding Ping Output: • Time values: Lower is better (measured in milliseconds) • Packet loss: Should be 0% for good connectivity • TTL (Time To Live): Shows how many hops the packet can make
+
+Subtask 2.3: Advanced Ping Options
+Step 12: Send larger ping packets to test network capacity:
+
+ping -c 4 -s 1000 google.com
+Step 13: Ping with timestamps to see when each response arrives:
+
+ping -c 4 -D google.com
+Task 3: Tracing Network Paths with Traceroute
+Subtask 3.1: Installing and Using Traceroute
+Step 14: Install traceroute if not already available:
+
+sudo apt install traceroute -y
+Step 15: Trace the path to a website:
+
+traceroute google.com
+Step 16: Use the more detailed tracepath command:
+
+tracepath google.com
+Subtask 3.2: Understanding Traceroute Output
+Step 17: Let's trace to a specific server and analyze the results:
+
+traceroute -n 8.8.8.8
+The -n flag shows IP addresses instead of trying to resolve hostnames, making it faster.
+
+What Each Line Shows: • Hop number: How many routers the packet passed through • IP addresses: The routers along the path • Response times: Three timing measurements per hop • Asterisks (*): Indicate timeouts or blocked responses
+
+Task 4: Exploring DNS Resolution
+Subtask 4.1: Basic DNS Lookup with nslookup
+Step 18: Look up the IP address of a website:
+
+nslookup google.com
+Step 19: Perform a reverse DNS lookup (IP to domain name):
+
+nslookup 8.8.8.8
+Step 20: Query a specific DNS server:
+
+nslookup google.com 1.1.1.1
+Subtask 4.2: Advanced DNS Queries with dig
+Step 21: Install dig if not available:
+
+sudo apt install dnsutils -y
+Step 22: Perform a basic dig query:
+
+dig google.com
+Step 23: Get just the IP address (clean output):
+
+dig +short google.com
+Step 24: Query different record types:
+
+dig google.com MX
+dig google.com NS
+dig google.com TXT
+Subtask 4.3: Understanding DNS Records
+Step 25: Get detailed information about DNS resolution:
+
+dig +trace google.com
+This shows the complete DNS resolution path from root servers down.
+
+Step 26: Check your local DNS configuration:
+
+cat /etc/resolv.conf
+Task 5: Network Troubleshooting Practice
+Subtask 5.1: Creating a Network Diagnostic Script
+Step 27: Create a simple network diagnostic script. Open a text editor:
+
+nano network_check.sh
+Step 28: Add the following script content:
+
+#!/bin/bash
+echo "=== Network Diagnostic Report ==="
+echo "Date: $(date)"
+echo ""
+
+echo "=== IP Configuration ==="
+ip addr show | grep -E "inet |UP"
+echo ""
+
+echo "=== Default Gateway ==="
+ip route | grep default
+echo ""
+
+echo "=== DNS Servers ==="
+cat /etc/resolv.conf | grep nameserver
+echo ""
+
+echo "=== Connectivity Tests ==="
+echo "Testing loopback..."
+ping -c 2 127.0.0.1 | tail -2
+
+echo "Testing DNS server..."
+ping -c 2 8.8.8.8 | tail -2
+
+echo "Testing internet connectivity..."
+ping -c 2 google.com | tail -2
+
+echo ""
+echo "=== DNS Resolution Test ==="
+nslookup google.com | grep -A 2 "Non-authoritative"
+Step 29: Make the script executable and run it:
+
+chmod +x network_check.sh
+./network_check.sh
+Subtask 5.2: Network Performance Testing
+Step 30: Test network performance with different packet sizes:
+
+echo "Testing different packet sizes..."
+for size in 64 128 512 1024; do
+    echo "Packet size: $size bytes"
+    ping -c 3 -s $size google.com | grep "min/avg/max"
+done
+Step 31: Monitor network interfaces in real-time:
+
+watch -n 2 'ip -s link'
+Press Ctrl+C to stop the monitoring.
+
+Task 6: Security-Focused Network Analysis
+Subtask 6.1: Port Scanning Basics
+Step 32: Install netcat for network testing:
+
+sudo apt install netcat -y
+Step 33: Test if common ports are open on your local machine:
+
+nc -zv 127.0.0.1 22
+nc -zv 127.0.0.1 80
+nc -zv 127.0.0.1 443
+Subtask 6.2: Network Service Discovery
+Step 34: Check what network services are running:
+
+ss -tuln
+Step 35: View network connections:
+
+ss -tuln | grep LISTEN
+Understanding the Output: • t: TCP connections • u: UDP connections
+• l: Listening ports • n: Show numerical addresses
+
+Troubleshooting Common Issues
+Issue 1: Command Not Found
+If you encounter "command not found" errors:
+
+# For ifconfig, netstat, etc.
+sudo apt install net-tools
+
+# For dig, nslookup
+sudo apt install dnsutils
+
+# For traceroute
+sudo apt install traceroute
+Issue 2: Permission Denied
+Some commands may require sudo privileges:
+
+sudo [command]
+Issue 3: Network Unreachable
+If ping fails:
+
+Check your IP configuration: ip addr show
+Verify your default route: ip route show
+Test local connectivity first: ping 127.0.0.1
+Issue 4: DNS Resolution Problems
+If websites don't resolve:
+
+Check DNS servers: cat /etc/resolv.conf
+Test with IP addresses: ping 8.8.8.8
+Try different DNS servers: nslookup google.com 1.1.1.1
+Lab Verification Checklist
+Before completing this lab, verify you can:
+
+ Display your network interface configuration
+ Successfully ping your local machine and gateway
+ Trace the network path to an external website
+ Resolve domain names to IP addresses
+ Run a basic network diagnostic script
+ Identify listening network services on your machine
+Conclusion
+Congratulations! You have successfully completed Lab 5: Networking Basics with IP Tools.
+
+What You Accomplished:
+
+• Mastered essential networking commands including ip, ping, traceroute, and DNS tools • Learned to diagnose network connectivity issues using systematic testing approaches • Understood IP addressing and routing concepts through hands-on exploration • Developed troubleshooting skills for common network problems • Created automated diagnostic scripts for efficient network analysis
+
+Why This Matters for Cybersecurity:
+
+These networking fundamentals are crucial for cybersecurity professionals because:
+
+• Incident Response: Quickly diagnose network-related security incidents • Threat Hunting: Identify unusual network patterns and connections • Vulnerability Assessment: Understand network topology and potential attack paths • Forensic Analysis: Trace network communications during security investigations • System Administration: Maintain secure and reliable network infrastructure
+
+The skills you've learned today form the foundation for more advanced cybersecurity topics like network monitoring, intrusion detection, and security analysis. These tools are used daily by cybersecurity professionals worldwide to maintain and secure network infrastructure.
+
+Next Steps: Consider exploring more advanced networking topics such as network scanning with nmap, packet analysis with tcpdump, or network monitoring tools as you continue your cybersecurity journey.
