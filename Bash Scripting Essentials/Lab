@@ -1,0 +1,779 @@
+ Bash Scripting Essentials
+Lab Objectives
+By the end of this lab, students will be able to:
+
+Create and execute basic Bash scripts to automate Linux tasks
+Implement loops and conditional statements in Bash scripts
+Write a file backup script using Bash scripting techniques
+Schedule automated script execution using cron jobs
+Apply fundamental scripting concepts for cybersecurity automation tasks
+Prerequisites
+Before starting this lab, students should have:
+
+Basic knowledge of Linux command line operations
+Understanding of file system navigation (cd, ls, pwd commands)
+Familiarity with text editors (nano or vim)
+Basic understanding of file permissions in Linux
+Knowledge of basic Linux commands (cp, mv, mkdir, chmod)
+Lab Environment
+Al Nafi Cloud Machine Setup: This lab runs entirely on a single Linux-based cloud machine provided by Al Nafi. Simply click Start Lab to access your pre-configured environment. No additional virtual machines or remote connections are required.
+
+System Requirements:
+
+Linux distribution (Ubuntu/CentOS/RHEL)
+Terminal access with bash shell
+Text editor (nano/vim)
+Cron service running
+Task 1: Creating Your First Backup Script
+Subtask 1.1: Setting Up the Script Environment
+First, let's create a dedicated directory for our scripts and set up the basic structure.
+
+Open your terminal and create a scripts directory:
+mkdir ~/scripts
+cd ~/scripts
+Create a test directory with some sample files to backup:
+mkdir ~/test_data
+cd ~/test_data
+echo "This is document 1" > document1.txt
+echo "This is document 2" > document2.txt
+echo "Important data here" > important.txt
+mkdir subdirectory
+echo "Nested file content" > subdirectory/nested.txt
+Return to your scripts directory:
+cd ~/scripts
+Subtask 1.2: Writing the Basic Backup Script
+Now we'll create our first backup script using a text editor.
+
+Create a new script file:
+nano backup_script.sh
+Enter the following script content:
+#!/bin/bash
+
+# Backup Script - Lab 4
+# This script creates a backup of specified directories
+
+# Define variables
+SOURCE_DIR="$HOME/test_data"
+BACKUP_DIR="$HOME/backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_NAME="backup_$DATE"
+
+# Create backup directory if it doesn't exist
+if [ ! -d "$BACKUP_DIR" ]; then
+    mkdir -p "$BACKUP_DIR"
+    echo "Created backup directory: $BACKUP_DIR"
+fi
+
+# Check if source directory exists
+if [ ! -d "$SOURCE_DIR" ]; then
+    echo "Error: Source directory $SOURCE_DIR does not exist!"
+    exit 1
+fi
+
+# Create the backup
+echo "Starting backup process..."
+echo "Source: $SOURCE_DIR"
+echo "Destination: $BACKUP_DIR/$BACKUP_NAME"
+
+# Copy files to backup location
+cp -r "$SOURCE_DIR" "$BACKUP_DIR/$BACKUP_NAME"
+
+# Check if backup was successful
+if [ $? -eq 0 ]; then
+    echo "Backup completed successfully!"
+    echo "Backup saved as: $BACKUP_DIR/$BACKUP_NAME"
+    
+    # Display backup size
+    BACKUP_SIZE=$(du -sh "$BACKUP_DIR/$BACKUP_NAME" | cut -f1)
+    echo "Backup size: $BACKUP_SIZE"
+else
+    echo "Backup failed!"
+    exit 1
+fi
+Save and exit the editor (Ctrl+X, then Y, then Enter in nano).
+
+Make the script executable:
+
+chmod +x backup_script.sh
+Test the script:
+./backup_script.sh
+Verify the backup was created:
+ls -la ~/backups/
+Task 2: Implementing Loops and Conditionals
+Subtask 2.1: Adding Loop Functionality
+Let's enhance our script with loops to handle multiple backup operations and file processing.
+
+Create an advanced backup script:
+nano advanced_backup.sh
+Enter the following enhanced script:
+#!/bin/bash
+
+# Advanced Backup Script with Loops and Conditionals
+# Lab 4 - Bash Scripting Essentials
+
+# Configuration variables
+BACKUP_BASE_DIR="$HOME/backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+LOG_FILE="$HOME/backup_log.txt"
+
+# Array of directories to backup
+DIRECTORIES_TO_BACKUP=(
+    "$HOME/test_data"
+    "$HOME/scripts"
+)
+
+# Function to log messages
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+}
+
+# Function to check disk space
+check_disk_space() {
+    local required_space=100  # MB
+    local available_space=$(df -m "$HOME" | awk 'NR==2 {print $4}')
+    
+    if [ "$available_space" -lt "$required_space" ]; then
+        log_message "ERROR: Insufficient disk space. Required: ${required_space}MB, Available: ${available_space}MB"
+        return 1
+    else
+        log_message "Disk space check passed. Available: ${available_space}MB"
+        return 0
+    fi
+}
+
+# Function to backup a single directory
+backup_directory() {
+    local source_dir="$1"
+    local backup_name="$2"
+    
+    if [ ! -d "$source_dir" ]; then
+        log_message "WARNING: Directory $source_dir does not exist, skipping..."
+        return 1
+    fi
+    
+    # Count files in source directory
+    local file_count=$(find "$source_dir" -type f | wc -l)
+    log_message "Backing up $file_count files from $source_dir"
+    
+    # Create backup
+    cp -r "$source_dir" "$BACKUP_BASE_DIR/$backup_name"
+    
+    if [ $? -eq 0 ]; then
+        local backup_size=$(du -sh "$BACKUP_BASE_DIR/$backup_name" | cut -f1)
+        log_message "SUCCESS: Backup completed for $source_dir (Size: $backup_size)"
+        return 0
+    else
+        log_message "ERROR: Backup failed for $source_dir"
+        return 1
+    fi
+}
+
+# Main script execution
+log_message "Starting advanced backup process"
+
+# Check disk space before proceeding
+if ! check_disk_space; then
+    log_message "Backup aborted due to insufficient disk space"
+    exit 1
+fi
+
+# Create main backup directory
+mkdir -p "$BACKUP_BASE_DIR"
+
+# Initialize counters
+successful_backups=0
+failed_backups=0
+
+# Loop through directories and backup each one
+for dir in "${DIRECTORIES_TO_BACKUP[@]}"; do
+    # Extract directory name for backup folder
+    dir_name=$(basename "$dir")
+    backup_folder_name="${dir_name}_${DATE}"
+    
+    log_message "Processing directory: $dir"
+    
+    # Conditional check for directory existence and backup
+    if [ -d "$dir" ]; then
+        if backup_directory "$dir" "$backup_folder_name"; then
+            ((successful_backups++))
+        else
+            ((failed_backups++))
+        fi
+    else
+        log_message "WARNING: Directory $dir not found"
+        ((failed_backups++))
+    fi
+    
+    # Add a small delay between backups
+    sleep 1
+done
+
+# Final report
+log_message "Backup process completed"
+log_message "Successful backups: $successful_backups"
+log_message "Failed backups: $failed_backups"
+
+# Conditional cleanup of old backups (keep only last 5)
+log_message "Checking for old backups to clean up..."
+backup_count=$(ls -1 "$BACKUP_BASE_DIR" | wc -l)
+
+if [ "$backup_count" -gt 5 ]; then
+    log_message "Found $backup_count backups, cleaning up old ones..."
+    # Remove oldest backups, keep only 5 most recent
+    ls -1t "$BACKUP_BASE_DIR" | tail -n +6 | while read old_backup; do
+        rm -rf "$BACKUP_BASE_DIR/$old_backup"
+        log_message "Removed old backup: $old_backup"
+    done
+else
+    log_message "Backup count ($backup_count) is within limit, no cleanup needed"
+fi
+
+# Exit with appropriate code
+if [ "$failed_backups" -eq 0 ]; then
+    log_message "All backups completed successfully!"
+    exit 0
+else
+    log_message "Some backups failed. Check log for details."
+    exit 1
+fi
+Save and exit the editor.
+
+Make the script executable:
+
+chmod +x advanced_backup.sh
+Test the advanced script:
+./advanced_backup.sh
+Check the log file to see detailed output:
+cat ~/backup_log.txt
+Subtask 2.2: Creating a File Management Script with Loops
+Let's create another script that demonstrates different types of loops and conditionals.
+
+Create a file management script:
+nano file_manager.sh
+Enter the following script:
+#!/bin/bash
+
+# File Management Script - Demonstrating Loops and Conditionals
+# Lab 4 - Bash Scripting Essentials
+
+# Create test directory structure
+TEST_DIR="$HOME/file_test"
+mkdir -p "$TEST_DIR"
+
+# Function to create test files
+create_test_files() {
+    echo "Creating test files..."
+    
+    # For loop to create numbered files
+    for i in {1..10}; do
+        echo "Test file content $i" > "$TEST_DIR/testfile$i.txt"
+    done
+    
+    # Create some files with different extensions
+    echo "Log entry 1" > "$TEST_DIR/app.log"
+    echo "Log entry 2" > "$TEST_DIR/system.log"
+    echo "Configuration data" > "$TEST_DIR/config.conf"
+    echo "Backup data" > "$TEST_DIR/backup.bak"
+    
+    echo "Test files created successfully!"
+}
+
+# Function to analyze files
+analyze_files() {
+    echo "Analyzing files in $TEST_DIR..."
+    
+    # Initialize counters
+    txt_count=0
+    log_count=0
+    other_count=0
+    total_size=0
+    
+    # While loop to read file list
+    find "$TEST_DIR" -type f | while read file; do
+        # Get file extension
+        extension="${file##*.}"
+        file_size=$(stat -c%s "$file")
+        
+        echo "Processing: $(basename "$file") (Size: $file_size bytes)"
+        
+        # Conditional statements for file categorization
+        case "$extension" in
+            "txt")
+                echo "  -> Text file detected"
+                ;;
+            "log")
+                echo "  -> Log file detected"
+                ;;
+            "conf")
+                echo "  -> Configuration file detected"
+                ;;
+            "bak")
+                echo "  -> Backup file detected"
+                ;;
+            *)
+                echo "  -> Other file type"
+                ;;
+        esac
+    done
+}
+
+# Function to organize files by type
+organize_files() {
+    echo "Organizing files by type..."
+    
+    # Create subdirectories
+    mkdir -p "$TEST_DIR/txt_files"
+    mkdir -p "$TEST_DIR/log_files"
+    mkdir -p "$TEST_DIR/config_files"
+    mkdir -p "$TEST_DIR/backup_files"
+    
+    # Move files to appropriate directories
+    for file in "$TEST_DIR"/*; do
+        # Skip if it's a directory
+        if [ -d "$file" ]; then
+            continue
+        fi
+        
+        filename=$(basename "$file")
+        extension="${filename##*.}"
+        
+        # Conditional file movement
+        if [ "$extension" = "txt" ]; then
+            mv "$file" "$TEST_DIR/txt_files/"
+            echo "Moved $filename to txt_files/"
+        elif [ "$extension" = "log" ]; then
+            mv "$file" "$TEST_DIR/log_files/"
+            echo "Moved $filename to log_files/"
+        elif [ "$extension" = "conf" ]; then
+            mv "$file" "$TEST_DIR/config_files/"
+            echo "Moved $filename to config_files/"
+        elif [ "$extension" = "bak" ]; then
+            mv "$file" "$TEST_DIR/backup_files/"
+            echo "Moved $filename to backup_files/"
+        fi
+    done
+}
+
+# Function to generate report
+generate_report() {
+    echo "Generating file organization report..."
+    
+    # Array of directories to check
+    directories=("txt_files" "log_files" "config_files" "backup_files")
+    
+    for dir in "${directories[@]}"; do
+        full_path="$TEST_DIR/$dir"
+        if [ -d "$full_path" ]; then
+            file_count=$(ls -1 "$full_path" | wc -l)
+            echo "$dir: $file_count files"
+            
+            # List files if any exist
+            if [ "$file_count" -gt 0 ]; then
+                echo "  Files:"
+                ls -1 "$full_path" | while read file; do
+                    echo "    - $file"
+                done
+            fi
+        fi
+    done
+}
+
+# Main execution
+echo "File Management Script Starting..."
+echo "=================================="
+
+# Menu system using case statement
+while true; do
+    echo ""
+    echo "Choose an option:"
+    echo "1) Create test files"
+    echo "2) Analyze files"
+    echo "3) Organize files"
+    echo "4) Generate report"
+    echo "5) Clean up test directory"
+    echo "6) Exit"
+    echo -n "Enter your choice (1-6): "
+    
+    read choice
+    
+    case $choice in
+        1)
+            create_test_files
+            ;;
+        2)
+            analyze_files
+            ;;
+        3)
+            organize_files
+            ;;
+        4)
+            generate_report
+            ;;
+        5)
+            echo "Cleaning up test directory..."
+            rm -rf "$TEST_DIR"
+            echo "Test directory removed."
+            ;;
+        6)
+            echo "Exiting file manager..."
+            break
+            ;;
+        *)
+            echo "Invalid option. Please choose 1-6."
+            ;;
+    esac
+done
+
+echo "File management script completed!"
+Save and exit the editor.
+
+Make the script executable:
+
+chmod +x file_manager.sh
+Run the interactive script:
+./file_manager.sh
+Test all menu options (1-5) to see loops and conditionals in action.
+Task 3: Scheduling Script Execution with Cron
+Subtask 3.1: Understanding Cron Basics
+Before scheduling our scripts, let's understand cron syntax and check if the cron service is running.
+
+Check if cron service is active:
+systemctl status cron
+If cron is not running, start it:
+
+sudo systemctl start cron
+sudo systemctl enable cron
+View current cron jobs:
+crontab -l
+Subtask 3.2: Creating a Scheduled Backup Script
+Let's create a script specifically designed for automated execution.
+
+Create a cron-friendly backup script:
+nano scheduled_backup.sh
+Enter the following script:
+#!/bin/bash
+
+# Scheduled Backup Script for Cron Execution
+# Lab 4 - Bash Scripting Essentials
+
+# Set PATH for cron environment
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Configuration
+SOURCE_DIRS=(
+    "$HOME/test_data"
+    "$HOME/scripts"
+    "$HOME/Documents"
+)
+
+BACKUP_BASE="$HOME/scheduled_backups"
+LOG_FILE="$HOME/cron_backup.log"
+DATE=$(date +%Y%m%d_%H%M%S)
+MAX_BACKUPS=7
+
+# Function to log with timestamp
+log_msg() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [CRON-BACKUP] $1" >> "$LOG_FILE"
+}
+
+# Function to send notification (for demonstration)
+send_notification() {
+    local message="$1"
+    log_msg "NOTIFICATION: $message"
+    # In a real environment, you might send email or system notification
+    echo "$message" > "$HOME/last_backup_status.txt"
+}
+
+# Start logging
+log_msg "Starting scheduled backup process"
+
+# Create backup directory
+mkdir -p "$BACKUP_BASE"
+
+# Initialize success counter
+successful_backups=0
+total_dirs=${#SOURCE_DIRS[@]}
+
+# Backup each directory
+for source_dir in "${SOURCE_DIRS[@]}"; do
+    if [ -d "$source_dir" ]; then
+        dir_name=$(basename "$source_dir")
+        backup_name="${dir_name}_${DATE}"
+        
+        log_msg "Backing up: $source_dir -> $backup_name"
+        
+        # Create backup
+        if cp -r "$source_dir" "$BACKUP_BASE/$backup_name" 2>/dev/null; then
+            backup_size=$(du -sh "$BACKUP_BASE/$backup_name" | cut -f1)
+            log_msg "SUCCESS: $source_dir backed up successfully (Size: $backup_size)"
+            ((successful_backups++))
+        else
+            log_msg "ERROR: Failed to backup $source_dir"
+        fi
+    else
+        log_msg "WARNING: Directory $source_dir does not exist, skipping"
+    fi
+done
+
+# Cleanup old backups
+log_msg "Cleaning up old backups (keeping last $MAX_BACKUPS)"
+backup_count=$(ls -1 "$BACKUP_BASE" 2>/dev/null | wc -l)
+
+if [ "$backup_count" -gt "$MAX_BACKUPS" ]; then
+    old_backups_count=$((backup_count - MAX_BACKUPS))
+    ls -1t "$BACKUP_BASE" | tail -n "$old_backups_count" | while read old_backup; do
+        rm -rf "$BACKUP_BASE/$old_backup"
+        log_msg "Removed old backup: $old_backup"
+    done
+    log_msg "Cleanup completed: removed $old_backups_count old backups"
+fi
+
+# Generate summary
+log_msg "Backup process completed: $successful_backups/$total_dirs directories backed up successfully"
+
+# Send notification based on results
+if [ "$successful_backups" -eq "$total_dirs" ]; then
+    send_notification "Backup completed successfully: $successful_backups/$total_dirs directories"
+else
+    send_notification "Backup completed with issues: $successful_backups/$total_dirs directories successful"
+fi
+
+# Exit with appropriate code
+if [ "$successful_backups" -gt 0 ]; then
+    exit 0
+else
+    exit 1
+fi
+Save and exit the editor.
+
+Make the script executable:
+
+chmod +x scheduled_backup.sh
+Test the script manually first:
+./scheduled_backup.sh
+Check the log file:
+cat ~/cron_backup.log
+Subtask 3.3: Setting Up Cron Jobs
+Now let's schedule our scripts to run automatically.
+
+Open the crontab editor:
+crontab -e
+Add the following cron jobs to the file:
+# Lab 4 - Bash Scripting Cron Jobs
+# Run backup every day at 2:00 AM
+0 2 * * * /home/$USER/scripts/scheduled_backup.sh
+
+# Run backup every 30 minutes during business hours (9 AM to 5 PM, Mon-Fri)
+*/30 9-17 * * 1-5 /home/$USER/scripts/scheduled_backup.sh
+
+# Run a quick backup every Sunday at midnight
+0 0 * * 0 /home/$USER/scripts/backup_script.sh
+
+# Clean up log files every month on the 1st at 3:00 AM
+0 3 1 * * find /home/$USER -name "*.log" -type f -mtime +30 -delete
+Save and exit the crontab editor.
+
+Verify your cron jobs were added:
+
+crontab -l
+Subtask 3.4: Testing Cron Job Execution
+Since waiting for scheduled times isn't practical in a lab, let's create a test cron job that runs every minute.
+
+Create a simple test script:
+nano test_cron.sh
+Enter the following content:
+#!/bin/bash
+
+# Test Cron Script - Runs every minute for testing
+echo "$(date): Cron test executed successfully" >> "$HOME/cron_test.log"
+
+# Create a simple backup of scripts directory
+if [ -d "$HOME/scripts" ]; then
+    cp -r "$HOME/scripts" "$HOME/cron_test_backup_$(date +%H%M%S)" 2>/dev/null
+    echo "$(date): Test backup created" >> "$HOME/cron_test.log"
+fi
+Save and exit, then make executable:
+chmod +x test_cron.sh
+Add a test cron job that runs every minute:
+crontab -e
+Add this line:
+
+# Test cron job - runs every minute (remove after testing)
+* * * * * /home/$USER/scripts/test_cron.sh
+Save and exit.
+
+Wait 2-3 minutes, then check if the cron job is working:
+
+cat ~/cron_test.log
+ls -la ~/cron_test_backup_*
+Remove the test cron job after verification:
+crontab -e
+Remove or comment out the test line, then save and exit.
+
+Subtask 3.5: Monitoring and Managing Cron Jobs
+Let's create a script to help monitor our cron jobs and their logs.
+
+Create a cron monitoring script:
+nano cron_monitor.sh
+Enter the following content:
+#!/bin/bash
+
+# Cron Job Monitoring Script
+# Lab 4 - Bash Scripting Essentials
+
+echo "Cron Job Monitoring Dashboard"
+echo "============================="
+
+# Display current cron jobs
+echo ""
+echo "Current Cron Jobs:"
+echo "------------------"
+crontab -l | grep -v "^#" | grep -v "^$" || echo "No active cron jobs found"
+
+# Check cron service status
+echo ""
+echo "Cron Service Status:"
+echo "-------------------"
+if systemctl is-active --quiet cron; then
+    echo "✓ Cron service is running"
+else
+    echo "✗ Cron service is not running"
+fi
+
+# Display recent cron logs (if available)
+echo ""
+echo "Recent Cron Activity:"
+echo "--------------------"
+if [ -f "/var/log/cron" ]; then
+    tail -10 /var/log/cron
+elif [ -f "/var/log/syslog" ]; then
+    grep -i cron /var/log/syslog | tail -10
+else
+    echo "Cron logs not accessible or not found"
+fi
+
+# Display our custom log files
+echo ""
+echo "Custom Backup Logs:"
+echo "------------------"
+if [ -f "$HOME/cron_backup.log" ]; then
+    echo "Last 5 backup log entries:"
+    tail -5 "$HOME/cron_backup.log"
+else
+    echo "No backup logs found yet"
+fi
+
+# Display backup directory status
+echo ""
+echo "Backup Directory Status:"
+echo "-----------------------"
+if [ -d "$HOME/scheduled_backups" ]; then
+    backup_count=$(ls -1 "$HOME/scheduled_backups" | wc -l)
+    echo "Number of backups: $backup_count"
+    
+    if [ "$backup_count" -gt 0 ]; then
+        echo "Recent backups:"
+        ls -lt "$HOME/scheduled_backups" | head -5
+    fi
+else
+    echo "No scheduled backups directory found"
+fi
+
+# Check disk usage
+echo ""
+echo "Disk Usage Summary:"
+echo "------------------"
+df -h "$HOME" | tail -1
+
+echo ""
+echo "Monitoring complete!"
+Save and exit, then make executable:
+chmod +x cron_monitor.sh
+Run the monitoring script:
+./cron_monitor.sh
+Verification and Testing
+Complete Lab Verification
+Let's run through a complete verification of all our scripts and cron jobs.
+
+Test all scripts manually:
+cd ~/scripts
+./backup_script.sh
+./advanced_backup.sh
+./scheduled_backup.sh
+./cron_monitor.sh
+Verify file structure:
+ls -la ~/scripts/
+ls -la ~/backups/
+ls -la ~/scheduled_backups/
+Check log files:
+cat ~/backup_log.txt
+cat ~/cron_backup.log
+Verify cron jobs are scheduled:
+crontab -l
+Test script permissions:
+ls -la ~/scripts/*.sh
+All scripts should show execute permissions (x) for the user.
+
+Troubleshooting Common Issues
+Script Execution Problems
+Issue: Permission denied when running scripts Solution:
+
+chmod +x script_name.sh
+Issue: Script can't find directories Solution: Check paths and create missing directories:
+
+mkdir -p ~/test_data ~/backups ~/scheduled_backups
+Cron Job Issues
+Issue: Cron jobs not executing Solution:
+
+Check cron service: systemctl status cron
+Verify cron syntax using online cron validators
+Use absolute paths in cron jobs
+Issue: Scripts work manually but fail in cron Solution: Add full PATH to scripts:
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Log File Problems
+Issue: Cannot write to log files Solution: Check permissions and create log files manually:
+
+touch ~/backup_log.txt ~/cron_backup.log
+chmod 644 ~/backup_log.txt ~/cron_backup.log
+Lab Conclusion
+Congratulations! You have successfully completed Lab 4: Bash Scripting Essentials. In this comprehensive lab, you have accomplished the following:
+
+Key Achievements
+Script Development Skills:
+
+Created functional backup scripts using Bash
+Implemented variables, functions, and error handling
+Developed interactive menu systems using case statements
+Programming Concepts Mastered:
+
+Loops: Used for loops to iterate through files and directories, while loops for file processing
+Conditionals: Implemented if-then-else statements for decision making and error checking
+Arrays: Worked with arrays to manage multiple directories and file types
+Automation and Scheduling:
+
+Successfully scheduled scripts using cron jobs
+Created monitoring tools to track automated processes
+Implemented log rotation and cleanup procedures
+Practical Applications:
+
+Built a complete backup solution with multiple backup strategies
+Created file management and organization tools
+Developed monitoring and reporting capabilities
+Why This Matters for Cybersecurity
+The skills you've developed in this lab are fundamental to cybersecurity automation:
+
+Incident Response: Automated scripts can quickly backup critical data during security incidents
+Log Management: Regular log rotation and backup prevents disk space issues and ensures audit trails
+System Monitoring: Scheduled scripts can monitor system health and detect anomalies
+Compliance: Automated backup and retention policies help meet regulatory requirements
+Efficiency: Automation reduces manual errors and ensures consistent security procedures
+Next Steps
+To further develop your Bash scripting skills for cybersecurity:
+
+Practice creating scripts for log analysis and threat detection
+Explore advanced scripting techniques like signal handling and process management
+Learn to integrate scripts with security tools and SIEM systems
+Study how to secure scripts themselves (input validation, secure coding practices)
+You now have a solid foundation in Bash scripting that will serve you well in cybersecurity roles, system administration, and automation tasks. The scripts you've created can be adapted and expanded for real-world security automation needs.
+
