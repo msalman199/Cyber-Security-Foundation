@@ -1,0 +1,574 @@
+Web Technologies Exploration
+Objectives
+By the end of this lab, students will be able to:
+
+Understand the fundamentals of HTTP requests and responses
+Use curl command-line tool to make GET and POST requests
+Explore and analyze API responses in JSON format
+Write Python scripts to interact with REST APIs
+Understand the difference between various HTTP methods
+Parse and manipulate API data using Python
+Implement basic error handling for web requests
+Prerequisites
+Before starting this lab, students should have:
+
+Basic understanding of Linux command line operations
+Familiarity with text editors (nano, vim, or gedit)
+Basic knowledge of Python programming
+Understanding of JSON data format
+Basic networking concepts (IP addresses, ports, protocols)
+Ready-to-Use Cloud Machines
+Al Nafi provides Linux-based cloud machines for this lab. Simply click Start Lab to access your pre-configured environment. No need to build your own VM or install additional software - everything is ready to use.
+
+Lab Environment Setup
+Your cloud machine comes pre-installed with:
+
+curl (command-line HTTP client)
+Python 3 with requests library
+Text editors (nano, vim, gedit)
+All necessary networking tools
+Task 1: Understanding HTTP with curl
+Subtask 1.1: Basic GET Requests
+First, let's explore how web requests work using curl, a powerful command-line tool for making HTTP requests.
+
+Step 1: Open a terminal and test your internet connection
+
+ping -c 3 google.com
+Step 2: Make your first GET request to a simple API
+
+curl https://httpbin.org/get
+This command sends a GET request to httpbin.org, a service designed for testing HTTP requests. You should see a JSON response containing information about your request.
+
+Step 3: Make a GET request with verbose output to see the full HTTP conversation
+
+curl -v https://httpbin.org/get
+The -v flag shows you the complete HTTP headers and response details.
+
+Step 4: Save the response to a file for later analysis
+
+curl https://httpbin.org/get -o response.json
+cat response.json
+Subtask 1.2: GET Requests with Parameters
+Step 1: Send a GET request with query parameters
+
+curl "https://httpbin.org/get?name=student&course=cybersecurity"
+Step 2: Use curl's data parameter method for cleaner syntax
+
+curl -G https://httpbin.org/get -d "name=student" -d "course=cybersecurity"
+Step 3: Test with a real-world API - get information about a GitHub user
+
+curl https://api.github.com/users/octocat
+Subtask 1.3: Understanding HTTP Headers
+Step 1: View response headers only
+
+curl -I https://httpbin.org/get
+Step 2: Send custom headers with your request
+
+curl -H "User-Agent: CyberSecurity-Student" -H "Accept: application/json" https://httpbin.org/headers
+Step 3: Examine the response to see how your custom headers were received
+
+curl -H "Custom-Header: Lab7-Exercise" https://httpbin.org/headers | grep -A 10 "headers"
+Task 2: Making POST Requests and Exploring API Responses
+Subtask 2.1: Basic POST Requests
+Step 1: Create a simple POST request with data
+
+curl -X POST https://httpbin.org/post -d "username=student&password=lab123"
+Step 2: Send JSON data in a POST request
+
+curl -X POST https://httpbin.org/post \
+  -H "Content-Type: application/json" \
+  -d '{"name": "John Doe", "email": "john@example.com", "course": "cybersecurity"}'
+Step 3: Send data from a file
+
+First, create a JSON file:
+
+cat > student_data.json << EOF
+{
+  "student_id": "CS001",
+  "name": "Alice Smith",
+  "course": "Cybersecurity Fundamentals",
+  "semester": "Fall 2024"
+}
+EOF
+Then send it via POST:
+
+curl -X POST https://httpbin.org/post \
+  -H "Content-Type: application/json" \
+  -d @student_data.json
+Subtask 2.2: Exploring Different HTTP Methods
+Step 1: Test PUT method
+
+curl -X PUT https://httpbin.org/put -d "data=updated_information"
+Step 2: Test DELETE method
+
+curl -X DELETE https://httpbin.org/delete
+Step 3: Test PATCH method
+
+curl -X PATCH https://httpbin.org/patch \
+  -H "Content-Type: application/json" \
+  -d '{"field_to_update": "new_value"}'
+Subtask 2.3: Analyzing API Responses
+Step 1: Get a formatted JSON response and analyze it
+
+curl https://api.github.com/repos/microsoft/vscode | python3 -m json.tool
+Step 2: Extract specific information from JSON responses using jq (if available) or grep
+
+# Using grep to find specific information
+curl -s https://api.github.com/repos/microsoft/vscode | grep -E '"name"|"description"|"language"'
+Step 3: Save and analyze response codes
+
+# Save HTTP status code
+curl -w "%{http_code}\n" -s -o /dev/null https://httpbin.org/status/200
+curl -w "%{http_code}\n" -s -o /dev/null https://httpbin.org/status/404
+curl -w "%{http_code}\n" -s -o /dev/null https://httpbin.org/status/500
+Task 3: Writing Python Scripts to Interact with APIs
+Subtask 3.1: Basic Python API Client
+Step 1: Create a simple Python script for GET requests
+
+cat > basic_api_client.py << 'EOF'
+#!/usr/bin/env python3
+import requests
+import json
+
+def make_get_request(url):
+    """Make a GET request and return the response"""
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raises an HTTPError for bad responses
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error making request: {e}")
+        return None
+
+def main():
+    # Test with httpbin
+    print("=== Testing GET Request ===")
+    url = "https://httpbin.org/get"
+    data = make_get_request(url)
+    
+    if data:
+        print("Request successful!")
+        print(f"Origin IP: {data.get('origin', 'Unknown')}")
+        print(f"User Agent: {data.get('headers', {}).get('User-Agent', 'Unknown')}")
+    
+    # Test with GitHub API
+    print("\n=== Testing GitHub API ===")
+    github_url = "https://api.github.com/users/octocat"
+    github_data = make_get_request(github_url)
+    
+    if github_data:
+        print(f"GitHub User: {github_data.get('login', 'Unknown')}")
+        print(f"Public Repos: {github_data.get('public_repos', 'Unknown')}")
+        print(f"Followers: {github_data.get('followers', 'Unknown')}")
+
+if __name__ == "__main__":
+    main()
+EOF
+Step 2: Make the script executable and run it
+
+chmod +x basic_api_client.py
+python3 basic_api_client.py
+Subtask 3.2: Advanced Python API Client with POST Requests
+Step 1: Create an advanced API client script
+
+cat > advanced_api_client.py << 'EOF'
+#!/usr/bin/env python3
+import requests
+import json
+import sys
+
+class APIClient:
+    def __init__(self, base_url="https://httpbin.org"):
+        self.base_url = base_url
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'CyberSecurity-Lab-Client/1.0'
+        })
+    
+    def get(self, endpoint, params=None):
+        """Make a GET request"""
+        url = f"{self.base_url}/{endpoint}"
+        try:
+            response = self.session.get(url, params=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"GET request failed: {e}")
+            return None
+    
+    def post(self, endpoint, data=None, json_data=None):
+        """Make a POST request"""
+        url = f"{self.base_url}/{endpoint}"
+        try:
+            if json_data:
+                response = self.session.post(url, json=json_data)
+            else:
+                response = self.session.post(url, data=data)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"POST request failed: {e}")
+            return None
+    
+    def test_get_with_params(self):
+        """Test GET request with parameters"""
+        print("=== Testing GET with Parameters ===")
+        params = {
+            'student': 'cybersec_learner',
+            'lab': 'web_technologies',
+            'level': 'basic'
+        }
+        
+        result = self.get('get', params=params)
+        if result:
+            print("Parameters sent successfully:")
+            for key, value in result.get('args', {}).items():
+                print(f"  {key}: {value}")
+    
+    def test_post_json(self):
+        """Test POST request with JSON data"""
+        print("\n=== Testing POST with JSON ===")
+        student_info = {
+            'name': 'Cybersecurity Student',
+            'course': 'Web Technologies Lab',
+            'skills': ['HTTP', 'APIs', 'Python'],
+            'lab_number': 7
+        }
+        
+        result = self.post('post', json_data=student_info)
+        if result:
+            print("JSON data sent successfully:")
+            sent_data = result.get('json', {})
+            print(f"  Name: {sent_data.get('name')}")
+            print(f"  Course: {sent_data.get('course')}")
+            print(f"  Skills: {sent_data.get('skills')}")
+    
+    def test_post_form_data(self):
+        """Test POST request with form data"""
+        print("\n=== Testing POST with Form Data ===")
+        form_data = {
+            'username': 'student123',
+            'action': 'login',
+            'timestamp': '2024-01-01T12:00:00Z'
+        }
+        
+        result = self.post('post', data=form_data)
+        if result:
+            print("Form data sent successfully:")
+            sent_data = result.get('form', {})
+            for key, value in sent_data.items():
+                print(f"  {key}: {value}")
+
+def main():
+    client = APIClient()
+    
+    # Run all tests
+    client.test_get_with_params()
+    client.test_post_json()
+    client.test_post_form_data()
+    
+    print("\n=== API Client Testing Complete ===")
+
+if __name__ == "__main__":
+    main()
+EOF
+Step 2: Run the advanced API client
+
+chmod +x advanced_api_client.py
+python3 advanced_api_client.py
+Subtask 3.3: Real-World API Integration
+Step 1: Create a script that interacts with a public API
+
+cat > weather_api_client.py << 'EOF'
+#!/usr/bin/env python3
+import requests
+import json
+from datetime import datetime
+
+class WeatherAPIClient:
+    def __init__(self):
+        # Using a free API that doesn't require authentication
+        self.base_url = "https://api.open-meteo.com/v1"
+    
+    def get_weather_data(self, latitude, longitude):
+        """Get current weather data for given coordinates"""
+        endpoint = f"{self.base_url}/forecast"
+        params = {
+            'latitude': latitude,
+            'longitude': longitude,
+            'current_weather': 'true',
+            'hourly': 'temperature_2m,relative_humidity_2m',
+            'timezone': 'auto'
+        }
+        
+        try:
+            response = requests.get(endpoint, params=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching weather data: {e}")
+            return None
+    
+    def display_weather_info(self, weather_data):
+        """Display formatted weather information"""
+        if not weather_data:
+            print("No weather data available")
+            return
+        
+        current = weather_data.get('current_weather', {})
+        
+        print("=== Current Weather Information ===")
+        print(f"Temperature: {current.get('temperature', 'N/A')}°C")
+        print(f"Wind Speed: {current.get('windspeed', 'N/A')} km/h")
+        print(f"Wind Direction: {current.get('winddirection', 'N/A')}°")
+        print(f"Weather Code: {current.get('weathercode', 'N/A')}")
+        print(f"Time: {current.get('time', 'N/A')}")
+        
+        # Display timezone info
+        timezone = weather_data.get('timezone', 'Unknown')
+        print(f"Timezone: {timezone}")
+
+def main():
+    client = WeatherAPIClient()
+    
+    # Test with coordinates for New York City
+    print("Fetching weather data for New York City...")
+    latitude = 40.7128
+    longitude = -74.0060
+    
+    weather_data = client.get_weather_data(latitude, longitude)
+    client.display_weather_info(weather_data)
+    
+    print("\n" + "="*50)
+    
+    # Test with coordinates for London
+    print("Fetching weather data for London...")
+    latitude = 51.5074
+    longitude = -0.1278
+    
+    weather_data = client.get_weather_data(latitude, longitude)
+    client.display_weather_info(weather_data)
+
+if __name__ == "__main__":
+    main()
+EOF
+Step 2: Run the weather API client
+
+chmod +x weather_api_client.py
+python3 weather_api_client.py
+Subtask 3.4: Error Handling and Response Validation
+Step 1: Create a robust API client with comprehensive error handling
+
+cat > robust_api_client.py << 'EOF'
+#!/usr/bin/env python3
+import requests
+import json
+import time
+from typing import Optional, Dict, Any
+
+class RobustAPIClient:
+    def __init__(self, timeout=10, max_retries=3):
+        self.timeout = timeout
+        self.max_retries = max_retries
+        self.session = requests.Session()
+    
+    def make_request(self, method: str, url: str, **kwargs) -> Optional[Dict[Any, Any]]:
+        """Make HTTP request with error handling and retries"""
+        
+        for attempt in range(self.max_retries):
+            try:
+                print(f"Attempt {attempt + 1}: {method.upper()} {url}")
+                
+                response = self.session.request(
+                    method=method,
+                    url=url,
+                    timeout=self.timeout,
+                    **kwargs
+                )
+                
+                # Check if request was successful
+                response.raise_for_status()
+                
+                # Try to parse JSON
+                try:
+                    return response.json()
+                except json.JSONDecodeError:
+                    print("Warning: Response is not valid JSON")
+                    return {"raw_content": response.text}
+                
+            except requests.exceptions.Timeout:
+                print(f"Timeout error on attempt {attempt + 1}")
+                if attempt < self.max_retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                    
+            except requests.exceptions.ConnectionError:
+                print(f"Connection error on attempt {attempt + 1}")
+                if attempt < self.max_retries - 1:
+                    time.sleep(2 ** attempt)
+                    
+            except requests.exceptions.HTTPError as e:
+                print(f"HTTP error: {e}")
+                print(f"Status code: {e.response.status_code}")
+                if e.response.status_code < 500:  # Don't retry client errors
+                    break
+                if attempt < self.max_retries - 1:
+                    time.sleep(2 ** attempt)
+                    
+            except requests.exceptions.RequestException as e:
+                print(f"Request error: {e}")
+                if attempt < self.max_retries - 1:
+                    time.sleep(2 ** attempt)
+        
+        print(f"All {self.max_retries} attempts failed")
+        return None
+    
+    def test_various_scenarios(self):
+        """Test different scenarios including error cases"""
+        
+        print("=== Testing Successful Request ===")
+        success_data = self.make_request('GET', 'https://httpbin.org/get')
+        if success_data:
+            print("✓ Successful request completed")
+        
+        print("\n=== Testing 404 Error ===")
+        not_found_data = self.make_request('GET', 'https://httpbin.org/status/404')
+        if not not_found_data:
+            print("✓ 404 error handled correctly")
+        
+        print("\n=== Testing Timeout (Simulated) ===")
+        timeout_data = self.make_request('GET', 'https://httpbin.org/delay/15')
+        if not timeout_data:
+            print("✓ Timeout handled correctly")
+        
+        print("\n=== Testing POST with Data ===")
+        post_data = {
+            'test': 'robust_client',
+            'timestamp': time.time(),
+            'status': 'testing'
+        }
+        
+        post_response = self.make_request(
+            'POST', 
+            'https://httpbin.org/post',
+            json=post_data
+        )
+        
+        if post_response:
+            print("✓ POST request with JSON data successful")
+            received_data = post_response.get('json', {})
+            print(f"  Sent test value: {post_data['test']}")
+            print(f"  Received test value: {received_data.get('test')}")
+
+def main():
+    print("=== Robust API Client Testing ===")
+    client = RobustAPIClient(timeout=5, max_retries=2)
+    client.test_various_scenarios()
+    print("\n=== Testing Complete ===")
+
+if __name__ == "__main__":
+    main()
+EOF
+Step 2: Run the robust API client
+
+chmod +x robust_api_client.py
+python3 robust_api_client.py
+Verification and Testing
+Step 1: Verify all scripts work correctly
+echo "Testing all created scripts..."
+echo "1. Basic API Client:"
+python3 basic_api_client.py | head -10
+
+echo -e "\n2. Advanced API Client:"
+python3 advanced_api_client.py | head -15
+
+echo -e "\n3. Weather API Client:"
+python3 weather_api_client.py | head -10
+Step 2: Check curl functionality
+echo "Testing curl commands..."
+echo "1. Basic GET request:"
+curl -s https://httpbin.org/get | head -5
+
+echo -e "\n2. POST request with JSON:"
+curl -s -X POST https://httpbin.org/post \
+  -H "Content-Type: application/json" \
+  -d '{"test": "verification"}' | grep -A 3 '"json"'
+Step 3: Review created files
+echo "Files created in this lab:"
+ls -la *.py *.json 2>/dev/null || echo "Some files may not exist if steps were skipped"
+Troubleshooting Common Issues
+Issue 1: curl command not found
+Solution:
+
+# Install curl if not available
+sudo apt update && sudo apt install curl -y
+Issue 2: Python requests module not found
+Solution:
+
+# Install requests library
+pip3 install requests
+# or
+sudo apt install python3-requests
+Issue 3: Network connectivity issues
+Solution:
+
+# Test network connectivity
+ping -c 3 8.8.8.8
+# Check DNS resolution
+nslookup httpbin.org
+Issue 4: Permission denied when running scripts
+Solution:
+
+# Make scripts executable
+chmod +x *.py
+# Or run with python3 directly
+python3 script_name.py
+Issue 5: JSON parsing errors
+Solution:
+
+# Use python3 to format JSON output
+curl -s https://httpbin.org/get | python3 -m json.tool
+Key Concepts Summary
+HTTP Methods
+GET: Retrieve data from a server
+POST: Send data to a server to create/update resources
+PUT: Update existing resources
+DELETE: Remove resources
+PATCH: Partially update resources
+Important HTTP Status Codes
+200: OK - Request successful
+201: Created - Resource created successfully
+400: Bad Request - Client error
+401: Unauthorized - Authentication required
+404: Not Found - Resource doesn't exist
+500: Internal Server Error - Server error
+API Best Practices Learned
+Always handle errors gracefully
+Use appropriate HTTP methods
+Include proper headers
+Implement retry logic for network requests
+Validate and parse responses carefully
+Use timeouts to prevent hanging requests
+Conclusion
+In this lab, you have successfully explored the fundamentals of web technologies and API interactions. You learned how to:
+
+Use curl effectively - You mastered making GET and POST requests, sending custom headers, and handling different types of data using the curl command-line tool.
+
+Understand HTTP protocols - You gained hands-on experience with various HTTP methods, status codes, and headers, which are essential for cybersecurity professionals who need to analyze web traffic and API communications.
+
+Develop Python API clients - You created progressively more sophisticated Python scripts that can interact with REST APIs, handle errors gracefully, and process JSON responses.
+
+Implement error handling - You learned how to build robust applications that can handle network failures, timeouts, and various HTTP error conditions.
+
+Work with real-world APIs - You interacted with actual public APIs, giving you practical experience that directly applies to cybersecurity tasks like threat intelligence gathering, security tool integration, and automated security testing.
+
+Why This Matters for Cybersecurity
+Understanding web technologies and APIs is crucial for cybersecurity professionals because:
+
+Security Testing: Many security tools use APIs for automation and integration
+Threat Intelligence: Security feeds and threat data are often delivered via APIs
+Incident Response: Automated response systems rely on API communications
+Monitoring and Logging: Security information is frequently exchanged through web services
+Vulnerability Assessment: Many security scanners and tools communicate via HTTP/HTTPS protocols
+The skills you've developed in this lab provide a foundation for more advanced cybersecurity topics including web application security testing, API security assessment, and security automation. You now have practical experience with the same tools and techniques used by cybersecurity professionals in their daily work.
+
+Continue practicing these skills by exploring different public APIs, experimenting with various HTTP methods, and building more complex Python applications that integrate multiple web services.
