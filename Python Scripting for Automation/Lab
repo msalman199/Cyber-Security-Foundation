@@ -1,0 +1,767 @@
+Python Scripting for Automation
+Objectives
+By the end of this lab, students will be able to:
+
+Write Python scripts to read from and write to files
+Create automated folder cleanup scripts
+Implement Python loops for repetitive tasks
+Use conditional statements to make decisions in scripts
+Define and use functions to organize code efficiently
+Understand basic automation concepts for cybersecurity tasks
+Execute Python scripts from the command line in a Linux environment
+Prerequisites
+Before starting this lab, students should have:
+
+Basic understanding of Linux command line operations
+Familiarity with text editors (nano, vim, or gedit)
+Basic programming concepts (variables, data types)
+Understanding of file system navigation in Linux
+Lab Environment
+Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines with Python pre-installed. Simply click Start Lab to access your dedicated Linux environment. No need to build your own VM or install additional software.
+
+Your cloud machine includes:
+
+Ubuntu Linux with Python 3.x pre-installed
+Text editors (nano, vim, gedit)
+All necessary permissions for file operations
+Task 1: File Operations with Python Scripts
+Subtask 1.1: Create a Simple File Reader Script
+First, let's create a directory structure for our lab work and write our first Python script.
+
+Create the lab directory structure:
+mkdir -p ~/python_automation_lab
+cd ~/python_automation_lab
+mkdir scripts data logs
+Create a sample data file to work with:
+echo -e "server1,192.168.1.10,active\nserver2,192.168.1.11,inactive\nserver3,192.168.1.12,active\nfirewall1,192.168.1.1,active" > data/network_devices.csv
+Create your first Python script for reading files:
+nano scripts/file_reader.py
+Enter the following code:
+#!/usr/bin/env python3
+"""
+File Reader Script - Lab 3 Task 1
+This script demonstrates basic file reading operations
+"""
+
+def read_network_devices(filename):
+    """
+    Function to read network device information from a CSV file
+    """
+    try:
+        with open(filename, 'r') as file:
+            print("Network Device Inventory:")
+            print("-" * 40)
+            print("Device Name | IP Address | Status")
+            print("-" * 40)
+            
+            for line in file:
+                # Remove newline character and split by comma
+                device_info = line.strip().split(',')
+                if len(device_info) == 3:
+                    device_name, ip_address, status = device_info
+                    print(f"{device_name:12} | {ip_address:13} | {status}")
+                    
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found!")
+    except Exception as e:
+        print(f"Error reading file: {e}")
+
+def main():
+    """
+    Main function to execute the file reading operation
+    """
+    filename = "../data/network_devices.csv"
+    read_network_devices(filename)
+
+if __name__ == "__main__":
+    main()
+Make the script executable and run it:
+chmod +x scripts/file_reader.py
+cd scripts
+python3 file_reader.py
+Subtask 1.2: Create a File Writer Script
+Now let's create a script that writes data to files, simulating log generation for security monitoring.
+
+Create a log writer script:
+nano log_writer.py
+Enter the following code:
+#!/usr/bin/env python3
+"""
+Log Writer Script - Lab 3 Task 1
+This script demonstrates file writing operations for security logs
+"""
+
+import datetime
+import os
+
+def write_security_log(log_file, event_type, message):
+    """
+    Function to write security events to a log file
+    """
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_entry = f"[{timestamp}] {event_type}: {message}\n"
+    
+    try:
+        with open(log_file, 'a') as file:
+            file.write(log_entry)
+        print(f"Log entry written: {event_type}")
+    except Exception as e:
+        print(f"Error writing to log file: {e}")
+
+def create_sample_logs():
+    """
+    Function to create sample security log entries
+    """
+    log_file = "../logs/security.log"
+    
+    # Sample security events
+    events = [
+        ("INFO", "User admin logged in successfully"),
+        ("WARNING", "Failed login attempt from IP 192.168.1.100"),
+        ("ERROR", "Unauthorized access attempt detected"),
+        ("INFO", "Firewall rule updated"),
+        ("CRITICAL", "Multiple failed login attempts - account locked")
+    ]
+    
+    print("Generating security log entries...")
+    print("-" * 40)
+    
+    for event_type, message in events:
+        write_security_log(log_file, event_type, message)
+    
+    print("-" * 40)
+    print(f"All log entries written to {log_file}")
+
+def main():
+    """
+    Main function to execute log writing operations
+    """
+    create_sample_logs()
+
+if __name__ == "__main__":
+    main()
+Run the log writer script:
+python3 log_writer.py
+Verify the log file was created:
+cat ../logs/security.log
+Task 2: Automated Folder Cleanup
+Subtask 2.1: Create Test Files for Cleanup
+First, let's create some test files to demonstrate our cleanup automation.
+
+Create a temporary files directory with test files:
+cd ~/python_automation_lab
+mkdir temp_files
+cd temp_files
+
+# Create various test files with different extensions and ages
+touch old_log_1.log old_log_2.log
+touch temp_file_1.tmp temp_file_2.tmp temp_file_3.tmp
+touch backup_1.bak backup_2.bak
+touch document.txt important.pdf
+touch cache_file_1.cache cache_file_2.cache
+
+# Create some files in subdirectories
+mkdir old_backups
+touch old_backups/backup_2023_01.bak old_backups/backup_2023_02.bak
+Subtask 2.2: Create the Folder Cleanup Script
+Create the cleanup automation script:
+cd ~/python_automation_lab/scripts
+nano folder_cleanup.py
+Enter the following code:
+#!/usr/bin/env python3
+"""
+Folder Cleanup Script - Lab 3 Task 2
+This script automates the cleanup of temporary and old files
+"""
+
+import os
+import glob
+import shutil
+from datetime import datetime
+
+def cleanup_by_extension(directory, extensions_to_remove):
+    """
+    Function to remove files with specific extensions
+    """
+    removed_files = []
+    
+    for extension in extensions_to_remove:
+        pattern = os.path.join(directory, f"*.{extension}")
+        files_to_remove = glob.glob(pattern)
+        
+        for file_path in files_to_remove:
+            try:
+                os.remove(file_path)
+                removed_files.append(file_path)
+                print(f"Removed: {os.path.basename(file_path)}")
+            except Exception as e:
+                print(f"Error removing {file_path}: {e}")
+    
+    return removed_files
+
+def cleanup_empty_directories(directory):
+    """
+    Function to remove empty directories
+    """
+    removed_dirs = []
+    
+    for root, dirs, files in os.walk(directory, topdown=False):
+        for dir_name in dirs:
+            dir_path = os.path.join(root, dir_name)
+            try:
+                if not os.listdir(dir_path):  # Check if directory is empty
+                    os.rmdir(dir_path)
+                    removed_dirs.append(dir_path)
+                    print(f"Removed empty directory: {dir_name}")
+            except Exception as e:
+                print(f"Error removing directory {dir_path}: {e}")
+    
+    return removed_dirs
+
+def list_files_before_cleanup(directory):
+    """
+    Function to list all files before cleanup
+    """
+    print("Files before cleanup:")
+    print("-" * 30)
+    
+    for root, dirs, files in os.walk(directory):
+        level = root.replace(directory, '').count(os.sep)
+        indent = ' ' * 2 * level
+        print(f"{indent}{os.path.basename(root)}/")
+        
+        subindent = ' ' * 2 * (level + 1)
+        for file in files:
+            print(f"{subindent}{file}")
+
+def main():
+    """
+    Main function to execute folder cleanup operations
+    """
+    cleanup_directory = "../temp_files"
+    
+    # Extensions to remove (temporary files)
+    extensions_to_clean = ['tmp', 'log', 'cache', 'bak']
+    
+    print("=== FOLDER CLEANUP AUTOMATION ===")
+    print(f"Target directory: {cleanup_directory}")
+    print()
+    
+    # List files before cleanup
+    if os.path.exists(cleanup_directory):
+        list_files_before_cleanup(cleanup_directory)
+        print()
+        
+        # Perform cleanup
+        print("Starting cleanup process...")
+        print("-" * 30)
+        
+        removed_files = cleanup_by_extension(cleanup_directory, extensions_to_clean)
+        removed_dirs = cleanup_empty_directories(cleanup_directory)
+        
+        print("-" * 30)
+        print(f"Cleanup completed!")
+        print(f"Files removed: {len(removed_files)}")
+        print(f"Directories removed: {len(removed_dirs)}")
+        
+        # List remaining files
+        print()
+        print("Remaining files:")
+        print("-" * 30)
+        list_files_before_cleanup(cleanup_directory)
+        
+    else:
+        print(f"Directory {cleanup_directory} does not exist!")
+
+if __name__ == "__main__":
+    main()
+Run the cleanup script:
+python3 folder_cleanup.py
+Task 3: Implementing Loops, Conditions, and Functions
+Subtask 3.1: Create a Network Security Monitor Script
+This script will demonstrate loops, conditions, and functions working together for a cybersecurity automation task.
+
+Create the network monitor script:
+nano network_monitor.py
+Enter the following code:
+#!/usr/bin/env python3
+"""
+Network Security Monitor - Lab 3 Task 3
+This script demonstrates loops, conditions, and functions for network monitoring
+"""
+
+import random
+import time
+import datetime
+
+def generate_network_data():
+    """
+    Function to simulate network traffic data
+    Returns a dictionary with network metrics
+    """
+    return {
+        'timestamp': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'connections': random.randint(50, 200),
+        'failed_logins': random.randint(0, 15),
+        'bandwidth_usage': random.randint(10, 95),
+        'suspicious_ips': random.randint(0, 5)
+    }
+
+def check_security_threats(data):
+    """
+    Function to analyze network data for security threats
+    Uses conditions to determine threat levels
+    """
+    threats = []
+    threat_level = "LOW"
+    
+    # Check for high failed login attempts
+    if data['failed_logins'] > 10:
+        threats.append("High number of failed login attempts")
+        threat_level = "HIGH"
+    elif data['failed_logins'] > 5:
+        threats.append("Moderate failed login attempts")
+        if threat_level == "LOW":
+            threat_level = "MEDIUM"
+    
+    # Check for suspicious IP addresses
+    if data['suspicious_ips'] > 3:
+        threats.append("Multiple suspicious IP addresses detected")
+        threat_level = "HIGH"
+    elif data['suspicious_ips'] > 0:
+        threats.append("Suspicious IP addresses detected")
+        if threat_level == "LOW":
+            threat_level = "MEDIUM"
+    
+    # Check for high bandwidth usage (potential DDoS)
+    if data['bandwidth_usage'] > 85:
+        threats.append("Unusually high bandwidth usage")
+        if threat_level != "HIGH":
+            threat_level = "MEDIUM"
+    
+    return threats, threat_level
+
+def log_security_event(threat_level, threats, data):
+    """
+    Function to log security events to a file
+    """
+    log_file = "../logs/network_monitor.log"
+    
+    with open(log_file, 'a') as file:
+        file.write(f"\n--- Security Scan: {data['timestamp']} ---\n")
+        file.write(f"Threat Level: {threat_level}\n")
+        file.write(f"Connections: {data['connections']}\n")
+        file.write(f"Failed Logins: {data['failed_logins']}\n")
+        file.write(f"Bandwidth Usage: {data['bandwidth_usage']}%\n")
+        file.write(f"Suspicious IPs: {data['suspicious_ips']}\n")
+        
+        if threats:
+            file.write("Detected Threats:\n")
+            for threat in threats:
+                file.write(f"  - {threat}\n")
+        else:
+            file.write("No threats detected\n")
+
+def display_monitoring_dashboard(scan_number, data, threats, threat_level):
+    """
+    Function to display real-time monitoring information
+    """
+    print(f"\n=== NETWORK SECURITY SCAN #{scan_number} ===")
+    print(f"Time: {data['timestamp']}")
+    print(f"Threat Level: {threat_level}")
+    print("-" * 40)
+    print(f"Active Connections: {data['connections']}")
+    print(f"Failed Login Attempts: {data['failed_logins']}")
+    print(f"Bandwidth Usage: {data['bandwidth_usage']}%")
+    print(f"Suspicious IP Addresses: {data['suspicious_ips']}")
+    
+    if threats:
+        print("\n⚠️  SECURITY ALERTS:")
+        for i, threat in enumerate(threats, 1):
+            print(f"  {i}. {threat}")
+    else:
+        print("\n✅ No security threats detected")
+    
+    print("-" * 40)
+
+def run_monitoring_cycle(duration_minutes=2, scan_interval=10):
+    """
+    Function to run continuous network monitoring
+    Uses loops to repeat monitoring tasks
+    """
+    print("🔍 Starting Network Security Monitoring...")
+    print(f"Duration: {duration_minutes} minutes")
+    print(f"Scan Interval: {scan_interval} seconds")
+    print("=" * 50)
+    
+    start_time = time.time()
+    end_time = start_time + (duration_minutes * 60)
+    scan_count = 0
+    
+    # Main monitoring loop
+    while time.time() < end_time:
+        scan_count += 1
+        
+        # Generate network data
+        network_data = generate_network_data()
+        
+        # Analyze for threats
+        detected_threats, threat_level = check_security_threats(network_data)
+        
+        # Display dashboard
+        display_monitoring_dashboard(scan_count, network_data, detected_threats, threat_level)
+        
+        # Log events if threats detected
+        if detected_threats or threat_level != "LOW":
+            log_security_event(threat_level, detected_threats, network_data)
+        
+        # Wait before next scan (unless it's the last iteration)
+        if time.time() + scan_interval < end_time:
+            print(f"Next scan in {scan_interval} seconds...")
+            time.sleep(scan_interval)
+        else:
+            break
+    
+    print(f"\n🏁 Monitoring completed. Total scans: {scan_count}")
+    return scan_count
+
+def generate_summary_report(total_scans):
+    """
+    Function to generate a summary report
+    """
+    log_file = "../logs/network_monitor.log"
+    
+    if os.path.exists(log_file):
+        with open(log_file, 'r') as file:
+            content = file.read()
+            high_threats = content.count("Threat Level: HIGH")
+            medium_threats = content.count("Threat Level: MEDIUM")
+            
+        print("\n📊 MONITORING SUMMARY REPORT")
+        print("=" * 40)
+        print(f"Total Security Scans: {total_scans}")
+        print(f"High Threat Events: {high_threats}")
+        print(f"Medium Threat Events: {medium_threats}")
+        print(f"Log File: {log_file}")
+        print("=" * 40)
+
+def main():
+    """
+    Main function to execute network monitoring
+    """
+    import os
+    
+    print("🛡️  NETWORK SECURITY MONITORING SYSTEM")
+    print("=" * 50)
+    
+    # Run monitoring cycle
+    total_scans = run_monitoring_cycle(duration_minutes=1, scan_interval=5)
+    
+    # Generate summary report
+    generate_summary_report(total_scans)
+    
+    print("\n📋 Check the log file for detailed security events:")
+    print("cat ../logs/network_monitor.log")
+
+if __name__ == "__main__":
+    main()
+Run the network monitoring script:
+python3 network_monitor.py
+Subtask 3.2: Create a Password Security Checker
+Let's create another script that demonstrates functions, loops, and conditions for password security validation.
+
+Create the password checker script:
+nano password_checker.py
+Enter the following code:
+#!/usr/bin/env python3
+"""
+Password Security Checker - Lab 3 Task 3
+This script demonstrates functions, loops, and conditions for password validation
+"""
+
+import re
+import string
+
+def check_password_length(password, min_length=8):
+    """
+    Function to check if password meets minimum length requirement
+    """
+    return len(password) >= min_length
+
+def check_password_complexity(password):
+    """
+    Function to check password complexity using conditions
+    """
+    checks = {
+        'has_uppercase': bool(re.search(r'[A-Z]', password)),
+        'has_lowercase': bool(re.search(r'[a-z]', password)),
+        'has_numbers': bool(re.search(r'\d', password)),
+        'has_special': bool(re.search(r'[!@#$%^&*(),.?":{}|<>]', password))
+    }
+    return checks
+
+def calculate_password_strength(password):
+    """
+    Function to calculate overall password strength score
+    """
+    score = 0
+    feedback = []
+    
+    # Length check
+    if check_password_length(password, 8):
+        score += 2
+    else:
+        feedback.append("Password should be at least 8 characters long")
+    
+    if len(password) >= 12:
+        score += 1
+        
+    # Complexity checks
+    complexity = check_password_complexity(password)
+    
+    for check, passed in complexity.items():
+        if passed:
+            score += 2
+        else:
+            if check == 'has_uppercase':
+                feedback.append("Add uppercase letters (A-Z)")
+            elif check == 'has_lowercase':
+                feedback.append("Add lowercase letters (a-z)")
+            elif check == 'has_numbers':
+                feedback.append("Add numbers (0-9)")
+            elif check == 'has_special':
+                feedback.append("Add special characters (!@#$%^&*)")
+    
+    # Check for common patterns
+    if password.lower() in ['password', '123456', 'qwerty', 'admin']:
+        score -= 5
+        feedback.append("Avoid common passwords")
+    
+    # Check for repeated characters
+    if len(set(password)) < len(password) * 0.6:
+        score -= 2
+        feedback.append("Avoid too many repeated characters")
+    
+    return max(0, score), feedback
+
+def get_strength_level(score):
+    """
+    Function to determine strength level based on score
+    """
+    if score >= 9:
+        return "VERY STRONG", "🟢"
+    elif score >= 7:
+        return "STRONG", "🟡"
+    elif score >= 5:
+        return "MODERATE", "🟠"
+    elif score >= 3:
+        return "WEAK", "🔴"
+    else:
+        return "VERY WEAK", "⚫"
+
+def test_multiple_passwords():
+    """
+    Function to test multiple passwords using loops
+    """
+    test_passwords = [
+        "123456",
+        "password",
+        "Password1",
+        "MyP@ssw0rd",
+        "SuperSecure123!",
+        "admin",
+        "P@ssw0rd2024!",
+        "weakpass",
+        "StrongP@ssw0rd123!"
+    ]
+    
+    print("🔐 TESTING MULTIPLE PASSWORDS")
+    print("=" * 60)
+    
+    results = []
+    
+    # Loop through each password
+    for i, password in enumerate(test_passwords, 1):
+        print(f"\nTest {i}: '{password}'")
+        print("-" * 30)
+        
+        score, feedback = calculate_password_strength(password)
+        strength, emoji = get_strength_level(score)
+        
+        print(f"Strength: {emoji} {strength} (Score: {score}/11)")
+        
+        if feedback:
+            print("Recommendations:")
+            for suggestion in feedback:
+                print(f"  • {suggestion}")
+        else:
+            print("✅ Excellent password!")
+        
+        results.append({
+            'password': password,
+            'score': score,
+            'strength': strength,
+            'feedback_count': len(feedback)
+        })
+    
+    return results
+
+def generate_password_report(results):
+    """
+    Function to generate a summary report of password tests
+    """
+    print("\n📊 PASSWORD SECURITY REPORT")
+    print("=" * 60)
+    
+    # Count passwords by strength level
+    strength_counts = {}
+    total_passwords = len(results)
+    
+    for result in results:
+        strength = result['strength']
+        strength_counts[strength] = strength_counts.get(strength, 0) + 1
+    
+    print(f"Total passwords tested: {total_passwords}")
+    print("\nStrength Distribution:")
+    
+    for strength, count in strength_counts.items():
+        percentage = (count / total_passwords) * 100
+        print(f"  {strength}: {count} ({percentage:.1f}%)")
+    
+    # Find best and worst passwords
+    best_password = max(results, key=lambda x: x['score'])
+    worst_password = min(results, key=lambda x: x['score'])
+    
+    print(f"\nBest Password: '{best_password['password']}' (Score: {best_password['score']})")
+    print(f"Worst Password: '{worst_password['password']}' (Score: {worst_password['score']})")
+    
+    # Calculate average score
+    avg_score = sum(result['score'] for result in results) / total_passwords
+    print(f"Average Security Score: {avg_score:.1f}/11")
+
+def interactive_password_checker():
+    """
+    Function for interactive password checking
+    """
+    print("\n🔍 INTERACTIVE PASSWORD CHECKER")
+    print("=" * 40)
+    print("Enter passwords to check (type 'quit' to exit)")
+    
+    while True:
+        password = input("\nEnter password: ").strip()
+        
+        if password.lower() == 'quit':
+            break
+        
+        if not password:
+            print("Please enter a password")
+            continue
+        
+        score, feedback = calculate_password_strength(password)
+        strength, emoji = get_strength_level(score)
+        
+        print(f"\nPassword Strength: {emoji} {strength} (Score: {score}/11)")
+        
+        if feedback:
+            print("Recommendations:")
+            for suggestion in feedback:
+                print(f"  • {suggestion}")
+        else:
+            print("✅ Excellent password!")
+
+def main():
+    """
+    Main function to execute password security checking
+    """
+    print("🛡️  PASSWORD SECURITY CHECKER")
+    print("=" * 50)
+    
+    # Test predefined passwords
+    results = test_multiple_passwords()
+    
+    # Generate report
+    generate_password_report(results)
+    
+    # Interactive checker
+    interactive_password_checker()
+    
+    print("\n👋 Thank you for using the Password Security Checker!")
+
+if __name__ == "__main__":
+    main()
+Run the password checker script:
+python3 password_checker.py
+Verification and Testing
+Verify All Scripts Work Correctly
+Check all created files:
+cd ~/python_automation_lab
+find . -name "*.py" -type f
+find . -name "*.log" -type f
+find . -name "*.csv" -type f
+Test each script individually:
+cd scripts
+
+# Test file reader
+python3 file_reader.py
+
+# Test log writer
+python3 log_writer.py
+
+# Test folder cleanup
+python3 folder_cleanup.py
+
+# Test network monitor
+python3 network_monitor.py
+
+# Test password checker
+python3 password_checker.py
+View generated log files:
+cat ../logs/security.log
+cat ../logs/network_monitor.log
+Troubleshooting Tips
+Common Issues and Solutions
+Issue: Permission denied when running scripts Solution: Make sure scripts are executable:
+
+chmod +x *.py
+Issue: Module not found errors Solution: Ensure you're running Python 3 and all imports are standard library modules:
+
+python3 --version
+Issue: File not found errors Solution: Check that you're in the correct directory and file paths are relative to your current location:
+
+pwd
+ls -la
+Issue: Scripts don't produce expected output Solution: Check for typos in the code and ensure proper indentation (Python is sensitive to indentation):
+
+python3 -m py_compile script_name.py
+Advanced Exercises (Optional)
+For students who complete the main tasks quickly:
+
+Modify the network monitor to save different threat levels to separate log files
+Enhance the password checker to read passwords from a file and generate a CSV report
+Create a new script that combines file operations with network monitoring to create a comprehensive security dashboard
+Conclusion
+Congratulations! You have successfully completed Lab 3: Python Scripting for Automation. In this lab, you have accomplished the following:
+
+Key Achievements
+File Operations Mastery: You created Python scripts that can read from and write to files, essential skills for log analysis and data processing in cybersecurity
+Automation Implementation: You built an automated folder cleanup system that can maintain clean file systems and remove temporary files
+Programming Fundamentals: You successfully implemented loops, conditional statements, and functions to create robust and reusable code
+Security Applications: You developed practical cybersecurity tools including a network security monitor and password strength checker
+Real-world Skills: You gained hands-on experience with Python automation that directly applies to cybersecurity tasks
+Why This Matters
+Python scripting automation is crucial in cybersecurity because:
+
+Efficiency: Automated scripts can perform repetitive security tasks 24/7 without human intervention
+Consistency: Scripts execute the same way every time, reducing human error in security processes
+Scalability: Automation allows security teams to monitor and protect larger networks with the same resources
+Rapid Response: Automated monitoring can detect and respond to threats faster than manual processes
+Documentation: Scripts create logs and reports that provide audit trails for compliance and forensic analysis
+Next Steps
+The skills you've learned in this lab form the foundation for more advanced cybersecurity automation topics such as:
+
+Network scanning and vulnerability assessment automation
+Incident response automation
+Security information and event management (SIEM) integration
+Automated threat hunting and analysis
+Compliance reporting automation
+You now have practical experience with Python automation that will serve you well in cybersecurity roles and can be expanded upon as you continue your learning journey in the Cyber Security Foundation certification path.
