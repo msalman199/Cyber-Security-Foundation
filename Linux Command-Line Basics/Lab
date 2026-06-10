@@ -1,0 +1,434 @@
+ Linux Command-Line Basics
+Objectives
+By the end of this lab, students will be able to:
+
+Navigate the Linux file system using command-line interface (CLI) commands
+Understand the directory structure and file paths in Linux
+Create, copy, move, and delete files and directories using basic commands
+Manage file and directory permissions using chmod and chown commands
+Demonstrate proficiency with essential Linux commands for cybersecurity tasks
+Prerequisites
+Before starting this lab, students should have:
+
+Basic understanding of what an operating system is
+Familiarity with the concept of files and folders
+No prior Linux experience required - this lab starts from the beginning
+Access to Al Nafi's cloud-based Linux machine (provided automatically)
+Lab Environment Setup
+Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines for this lab. Simply click Start Lab to access your pre-configured Linux environment. No need to build your own virtual machine or install any software.
+
+Your cloud machine comes with:
+
+Ubuntu Linux operating system
+Terminal access
+All necessary tools pre-installed
+Root and user account access
+Task 1: Navigate Directories
+Understanding the Linux File System
+Linux organizes files in a hierarchical tree structure starting from the root directory /. Think of it like a family tree where / is the great-grandparent, and all other directories branch out from there.
+
+Subtask 1.1: Learn Your Current Location
+First, let's find out where you are in the file system.
+
+Open the terminal (it should be available immediately when you start the lab)
+
+Type the following command to see your current directory:
+
+pwd
+Expected Output: You should see something like /home/student or /root
+
+What this means: pwd stands for "Print Working Directory" - it shows you exactly where you are in the file system.
+
+Subtask 1.2: List Directory Contents
+Now let's see what files and directories are in your current location.
+
+List the contents of your current directory:
+ls
+Get more detailed information about the contents:
+ls -l
+Show hidden files (files that start with a dot):
+ls -la
+What you're seeing:
+
+ls shows basic file and directory names
+ls -l shows detailed information including permissions, owner, size, and date
+ls -la shows everything including hidden files
+Subtask 1.3: Navigate Between Directories
+Let's move around the file system like exploring different rooms in a house.
+
+Go to the root directory (the top of the file system):
+cd /
+Verify your new location:
+pwd
+List what's in the root directory:
+ls
+Navigate to the home directory:
+cd /home
+Go back to your user's home directory:
+cd ~
+Note: The ~ symbol is a shortcut that always takes you to your home directory.
+
+Go up one directory level:
+cd ..
+Return to your home directory:
+cd
+Key Navigation Commands Summary:
+
+cd / - Go to root directory
+cd ~ or just cd - Go to home directory
+cd .. - Go up one directory level
+cd directory_name - Go into a specific directory
+Task 2: Create, Copy, Move, and Delete Files
+Subtask 2.1: Create Files and Directories
+Let's create some files and directories to practice with.
+
+First, make sure you're in your home directory:
+cd ~
+Create a new directory called lab_practice:
+mkdir lab_practice
+Navigate into this new directory:
+cd lab_practice
+Create an empty file called test_file.txt:
+touch test_file.txt
+Create multiple files at once:
+touch file1.txt file2.txt file3.txt
+Create a subdirectory:
+mkdir documents
+Verify everything was created:
+ls -la
+Subtask 2.2: Add Content to Files
+Let's add some content to our files to make them more realistic.
+
+Add content to a file using echo:
+echo "This is my first Linux file" > test_file.txt
+Add more content to the same file:
+echo "This is line 2" >> test_file.txt
+View the content of the file:
+cat test_file.txt
+Create a file with multiple lines:
+cat > file1.txt << EOF
+Welcome to Linux
+This is a cybersecurity lab
+Learning command line is important
+EOF
+Note:
+
+> overwrites the file content
+>> appends to the file content
+cat displays file content
+Subtask 2.3: Copy Files
+Now let's learn how to copy files - like making photocopies of important documents.
+
+Copy a single file:
+cp test_file.txt test_file_backup.txt
+Copy a file to a different directory:
+cp file1.txt documents/
+Copy multiple files to a directory:
+cp file2.txt file3.txt documents/
+Copy a file and rename it at the same time:
+cp test_file.txt documents/renamed_file.txt
+Verify the copies were made:
+ls -la
+ls -la documents/
+Subtask 2.4: Move and Rename Files
+Moving files is like cutting and pasting - the original disappears from the old location.
+
+Create a new directory for organization:
+mkdir backup_folder
+Move a file to the new directory:
+mv test_file_backup.txt backup_folder/
+Rename a file (moving it to the same location with a new name):
+mv file2.txt important_file.txt
+Move and rename at the same time:
+mv file3.txt backup_folder/archived_file.txt
+Move a directory:
+mkdir temp_dir
+mv temp_dir backup_folder/
+Check the results:
+ls -la
+ls -la backup_folder/
+Subtask 2.5: Delete Files and Directories
+Warning: Deletion in Linux is permanent - there's no recycle bin!
+
+Delete a single file:
+rm important_file.txt
+Create some test files to practice deletion:
+touch delete_me1.txt delete_me2.txt delete_me3.txt
+Delete multiple files at once:
+rm delete_me1.txt delete_me2.txt delete_me3.txt
+Try to delete a directory with regular rm (this will fail):
+rm backup_folder
+Delete an empty directory:
+mkdir empty_dir
+rmdir empty_dir
+Delete a directory and all its contents (be very careful with this):
+rm -r backup_folder
+Important Safety Notes:
+
+Always double-check before using rm -r
+Never run rm -rf / (this would delete everything!)
+Use ls to verify what you're about to delete
+Task 3: Manage Users and Permissions
+Understanding Linux Permissions
+Linux permissions control who can read, write, or execute files. Think of it like having different keys for different rooms in a building.
+
+Subtask 3.1: Understanding Permission Display
+Create a test file and examine its permissions:
+touch permission_test.txt
+ls -l permission_test.txt
+You'll see something like: -rw-r--r-- 1 student student 0 date permission_test.txt
+
+Breaking down the permission string:
+
+First character: file type (- for file, d for directory)
+Next 9 characters: permissions in groups of 3
+Characters 2-4: owner permissions (user)
+Characters 5-7: group permissions
+Characters 8-10: other users permissions
+Permission meanings:
+
+r = read (4)
+w = write (2)
+x = execute (1)
+Subtask 3.2: Change File Permissions with chmod
+Let's practice changing permissions using both symbolic and numeric methods.
+
+Create a script file to work with:
+echo "#!/bin/bash" > my_script.sh
+echo "echo 'Hello from my script!'" >> my_script.sh
+Check current permissions:
+ls -l my_script.sh
+Try to run the script (this will fail because it's not executable):
+./my_script.sh
+Make the script executable for the owner:
+chmod u+x my_script.sh
+Check permissions again:
+ls -l my_script.sh
+Now run the script:
+./my_script.sh
+Practice different permission changes:
+# Remove write permission for group and others
+chmod go-w my_script.sh
+
+# Add read permission for everyone
+chmod a+r my_script.sh
+
+# Set specific permissions using numbers (755 = rwxr-xr-x)
+chmod 755 my_script.sh
+
+# Set read-only for everyone (444 = r--r--r--)
+chmod 444 permission_test.txt
+Verify each change:
+ls -l my_script.sh permission_test.txt
+Subtask 3.3: Understanding Numeric Permissions
+The numeric system uses three digits, each representing owner, group, and others:
+
+7 = read + write + execute (4+2+1)
+6 = read + write (4+2)
+5 = read + execute (4+1)
+4 = read only
+3 = write + execute (2+1)
+2 = write only
+1 = execute only
+0 = no permissions
+Common permission combinations:
+
+# Create files to demonstrate different permissions
+touch demo1.txt demo2.txt demo3.txt
+
+# 644: owner can read/write, others can only read
+chmod 644 demo1.txt
+
+# 755: owner can do everything, others can read/execute
+chmod 755 demo2.txt
+
+# 600: only owner can read/write, no access for others
+chmod 600 demo3.txt
+
+# Check the results
+ls -l demo*.txt
+Subtask 3.4: Change File Ownership with chown
+Note: Some chown operations require root privileges. We'll demonstrate what we can do as a regular user.
+
+Check current ownership:
+ls -l my_script.sh
+See available users and groups:
+whoami
+groups
+If you have sudo access, you can change ownership:
+# This might require sudo depending on your system setup
+sudo chown root:root my_script.sh
+ls -l my_script.sh
+Change it back to your user:
+sudo chown $USER:$USER my_script.sh
+ls -l my_script.sh
+If you don't have sudo access, you can still practice the syntax:
+
+# These commands show the syntax but may not execute without proper privileges
+echo "chown newowner:newgroup filename"
+echo "chown newowner filename"
+echo "chown :newgroup filename"
+Subtask 3.5: Working with Directory Permissions
+Directory permissions work differently than file permissions:
+
+Create a test directory structure:
+mkdir test_permissions
+cd test_permissions
+mkdir secret_folder
+touch secret_folder/secret_file.txt
+echo "Top secret information" > secret_folder/secret_file.txt
+Set directory permissions:
+# Remove all permissions for others
+chmod 700 secret_folder
+ls -ld secret_folder
+Test directory access:
+# This should work (you're the owner)
+ls secret_folder/
+
+# Change to more restrictive permissions
+chmod 000 secret_folder
+
+# This should fail
+ls secret_folder/
+Restore access:
+chmod 755 secret_folder
+ls secret_folder/
+Verification and Testing
+Let's verify that you've mastered all the concepts by completing these verification tasks:
+
+Verification Task 1: Navigation Mastery
+# Start from home directory
+cd ~
+
+# Navigate to root, then back to home
+cd /
+pwd
+cd ~
+pwd
+
+# Create and navigate to a test directory
+mkdir verification_test
+cd verification_test
+pwd
+Verification Task 2: File Management Mastery
+# Create a complex directory structure
+mkdir -p project/{src,docs,tests}
+touch project/README.md
+touch project/src/main.py
+touch project/docs/manual.txt
+touch project/tests/test_main.py
+
+# Verify structure
+ls -la project/
+ls -la project/src/
+ls -la project/docs/
+ls -la project/tests/
+
+# Copy and move files
+cp project/README.md project/docs/
+mv project/docs/manual.txt project/docs/user_guide.txt
+
+# Verify changes
+ls -la project/docs/
+Verification Task 3: Permissions Mastery
+# Create a script and set proper permissions
+echo "#!/bin/bash" > final_test.sh
+echo "echo 'Congratulations! You have mastered Linux basics!'" >> final_test.sh
+
+# Set executable permissions
+chmod 755 final_test.sh
+
+# Verify permissions
+ls -l final_test.sh
+
+# Run the script
+./final_test.sh
+Troubleshooting Common Issues
+Issue 1: Permission Denied Errors
+Problem: Getting "Permission denied" when trying to execute a file.
+
+Solution:
+
+# Check current permissions
+ls -l filename
+
+# Add execute permission
+chmod +x filename
+Issue 2: Cannot Remove Directory
+Problem: rm command fails to remove a directory.
+
+Solution:
+
+# For empty directories
+rmdir directory_name
+
+# For directories with content
+rm -r directory_name
+Issue 3: Lost in the File System
+Problem: Don't know where you are or how to get back home.
+
+Solution:
+
+# See current location
+pwd
+
+# Go back to home directory
+cd ~
+
+# Or just
+cd
+Issue 4: Command Not Found
+Problem: Getting "command not found" error.
+
+Solution:
+
+Check spelling of the command
+Verify the command exists: which command_name
+Make sure you're using the correct syntax
+Lab Summary and Conclusion
+Congratulations! You have successfully completed Lab 1: Linux Command-Line Basics. In this lab, you have accomplished the following:
+
+What You Learned
+File System Navigation: You mastered the essential navigation commands (cd, ls, pwd) and understand how Linux organizes files in a hierarchical structure.
+
+File Management: You learned to create (touch, mkdir), copy (cp), move (mv), and delete (rm, rmdir) files and directories effectively.
+
+Permission Management: You gained hands-on experience with Linux permissions using chmod and chown, understanding both symbolic and numeric permission systems.
+
+Command-Line Proficiency: You developed confidence in using the Linux terminal, which is essential for cybersecurity professionals.
+
+Why This Matters for Cybersecurity
+The skills you've learned in this lab are fundamental for cybersecurity professionals because:
+
+System Administration: Most security tools and servers run on Linux systems
+Incident Response: You need to navigate file systems quickly during security incidents
+Log Analysis: Security logs are typically accessed and analyzed via command line
+Tool Usage: Many cybersecurity tools are command-line based
+Automation: Understanding file permissions is crucial for secure script deployment
+Next Steps
+You are now ready to:
+
+Explore more advanced Linux commands
+Work with text processing tools
+Learn about system monitoring and process management
+Begin working with cybersecurity-specific Linux tools
+Key Commands Reference
+Navigation:
+
+pwd - Print working directory
+cd - Change directory
+ls - List directory contents
+File Management:
+
+touch - Create empty files
+mkdir - Create directories
+cp - Copy files/directories
+mv - Move/rename files/directories
+rm - Remove files
+rmdir - Remove empty directories
+Permissions:
+
+chmod - Change file permissions
+chown - Change file ownership
+ls -l - View detailed file information
+Keep practicing these commands, as they form the foundation for all advanced Linux operations you'll encounter in your cybersecurity journey!
