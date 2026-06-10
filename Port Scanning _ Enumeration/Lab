@@ -1,0 +1,355 @@
+ Port Scanning & Enumeration
+Objectives
+By the end of this lab, students will be able to:
+
+Understand the fundamentals of port scanning and network enumeration
+Use Nmap to discover open ports and services on local systems
+Utilize Netcat for basic connection testing and service verification
+Identify and analyze listening services on a Linux system
+Interpret scan results to assess network security posture
+Apply ethical hacking principles in a controlled environment
+Prerequisites
+Before starting this lab, students should have:
+
+Basic understanding of networking concepts (IP addresses, ports, protocols)
+Familiarity with Linux command-line interface
+Knowledge of TCP/IP protocol fundamentals
+Understanding of common network services (HTTP, SSH, FTP, etc.)
+Basic cybersecurity awareness and ethical considerations
+Lab Environment
+Al Nafi Cloud Machine Setup: This lab runs entirely on a single Linux-based cloud machine provided by Al Nafi. Simply click Start Lab to access your pre-configured environment. No additional virtual machines or remote hosts are required.
+
+Tools Used:
+
+Nmap (Network Mapper) - Pre-installed network discovery tool
+Netcat (nc) - Network utility for connection testing
+Netstat - Network statistics utility
+ss - Modern socket statistics tool
+Task 1: Understanding Your Local Environment
+Subtask 1.1: Examine Network Interfaces
+First, let's understand the network configuration of our system.
+
+# Display network interfaces
+ip addr show
+
+# Alternative command
+ifconfig
+Expected Output: You should see network interfaces including lo (loopback) and eth0 or similar for the main network interface.
+
+Subtask 1.2: Check Currently Listening Services
+Before scanning, let's see what services are already running on our system.
+
+# Display listening ports using netstat
+netstat -tuln
+
+# Modern alternative using ss command
+ss -tuln
+Key Information:
+
+-t: TCP connections
+-u: UDP connections
+-l: Listening ports only
+-n: Show numerical addresses
+Record the open ports you observe for comparison later.
+
+Task 2: Basic Nmap Port Scanning
+Subtask 2.1: Install and Verify Nmap
+# Check if Nmap is installed
+nmap --version
+
+# If not installed, install it
+sudo apt update
+sudo apt install nmap -y
+Subtask 2.2: Scan Localhost (127.0.0.1)
+Let's start with a basic scan of our local machine.
+
+# Basic TCP scan of localhost
+nmap 127.0.0.1
+
+# Scan specific port range
+nmap -p 1-1000 127.0.0.1
+
+# Scan common ports with service detection
+nmap -sV 127.0.0.1
+Understanding the Output:
+
+Open: Port is accepting connections
+Closed: Port is not accepting connections but responding
+Filtered: Port is blocked by firewall
+Subtask 2.3: Detailed Service Enumeration
+# Comprehensive scan with OS detection and service versions
+nmap -sV -O 127.0.0.1
+
+# Aggressive scan (combines multiple options)
+nmap -A 127.0.0.1
+
+# Scan all 65535 ports (this may take time)
+nmap -p- 127.0.0.1
+Note: The -A flag enables OS detection, version detection, script scanning, and traceroute.
+
+Subtask 2.4: UDP Port Scanning
+# UDP scan (requires root privileges)
+sudo nmap -sU 127.0.0.1
+
+# UDP scan on specific ports
+sudo nmap -sU -p 53,67,68,123,161 127.0.0.1
+Important: UDP scans take longer than TCP scans because UDP is connectionless.
+
+Task 3: Advanced Nmap Techniques
+Subtask 3.1: Stealth Scanning
+# SYN stealth scan (default for privileged users)
+sudo nmap -sS 127.0.0.1
+
+# TCP connect scan (default for unprivileged users)
+nmap -sT 127.0.0.1
+
+# TCP ACK scan to check firewall rules
+sudo nmap -sA 127.0.0.1
+Subtask 3.2: Script Scanning
+Nmap includes powerful scripts for vulnerability detection and service enumeration.
+
+# Run default scripts
+nmap -sC 127.0.0.1
+
+# List available scripts
+nmap --script-help all | head -20
+
+# Run specific vulnerability scripts
+nmap --script vuln 127.0.0.1
+
+# HTTP enumeration scripts
+nmap --script http-enum 127.0.0.1
+Subtask 3.3: Output Formatting
+# Save results in different formats
+nmap -oN scan_results.txt 127.0.0.1
+nmap -oX scan_results.xml 127.0.0.1
+nmap -oG scan_results.gnmap 127.0.0.1
+
+# Save in all formats
+nmap -oA complete_scan 127.0.0.1
+
+# View the saved results
+cat scan_results.txt
+Task 4: Using Netcat for Connection Testing
+Subtask 4.1: Install and Verify Netcat
+# Check if netcat is installed
+nc -h
+
+# Install if needed (usually pre-installed)
+sudo apt install netcat-openbsd -y
+Subtask 4.2: Basic Connection Testing
+# Test connection to a known open port (SSH - port 22)
+nc -zv 127.0.0.1 22
+
+# Test multiple ports
+nc -zv 127.0.0.1 20-25
+
+# Test with timeout
+timeout 5 nc -zv 127.0.0.1 80
+Flags Explanation:
+
+-z: Zero-I/O mode (used for scanning)
+-v: Verbose output
+-w: Timeout in seconds
+Subtask 4.3: Banner Grabbing
+# Connect to SSH service and grab banner
+nc 127.0.0.1 22
+
+# Connect to HTTP service (if running)
+echo -e "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n" | nc 127.0.0.1 80
+
+# Telnet-style connection
+nc -C 127.0.0.1 22
+Note: Press Ctrl+C to exit the connection.
+
+Subtask 4.4: Creating a Simple Listener
+# Create a listener on port 1234 (in one terminal)
+nc -l -p 1234
+
+# In another terminal or tab, connect to it
+nc 127.0.0.1 1234
+Type messages in either terminal to see bidirectional communication.
+
+Task 5: Service Identification and Analysis
+Subtask 5.1: Identify Common Services
+Create a script to identify common services:
+
+# Create a service identification script
+cat > identify_services.sh << 'EOF'
+#!/bin/bash
+
+echo "=== Service Identification Report ==="
+echo "Date: $(date)"
+echo "Host: $(hostname)"
+echo "IP: $(hostname -I)"
+echo
+
+echo "=== Open TCP Ports ==="
+nmap -sT 127.0.0.1 | grep "open"
+
+echo
+echo "=== Service Versions ==="
+nmap -sV 127.0.0.1 | grep -E "(open|Service Info)"
+
+echo
+echo "=== Listening Services ==="
+ss -tuln | grep LISTEN
+
+echo
+echo "=== Process Information ==="
+sudo netstat -tulnp | grep LISTEN
+EOF
+
+# Make it executable and run
+chmod +x identify_services.sh
+./identify_services.sh
+Subtask 5.2: Analyze Results
+# Create analysis script
+cat > analyze_ports.sh << 'EOF'
+#!/bin/bash
+
+echo "=== Port Analysis ==="
+
+# Common ports and their services
+declare -A common_ports=(
+    [22]="SSH"
+    [23]="Telnet"
+    [25]="SMTP"
+    [53]="DNS"
+    [80]="HTTP"
+    [110]="POP3"
+    [143]="IMAP"
+    [443]="HTTPS"
+    [993]="IMAPS"
+    [995]="POP3S"
+)
+
+# Get open ports
+open_ports=$(nmap -p- --open 127.0.0.1 2>/dev/null | grep "^[0-9]" | cut -d'/' -f1)
+
+echo "Open ports found:"
+for port in $open_ports; do
+    service=${common_ports[$port]:-"Unknown"}
+    echo "Port $port: $service"
+done
+EOF
+
+chmod +x analyze_ports.sh
+./analyze_ports.sh
+Task 6: Security Assessment
+Subtask 6.1: Vulnerability Assessment
+# Check for common vulnerabilities
+nmap --script vuln 127.0.0.1
+
+# Check for default credentials
+nmap --script auth 127.0.0.1
+
+# Check for information disclosure
+nmap --script discovery 127.0.0.1
+Subtask 6.2: Create Security Report
+# Generate comprehensive security report
+cat > security_report.sh << 'EOF'
+#!/bin/bash
+
+REPORT_FILE="security_report_$(date +%Y%m%d_%H%M%S).txt"
+
+{
+    echo "=== SECURITY ASSESSMENT REPORT ==="
+    echo "Generated: $(date)"
+    echo "Target: localhost (127.0.0.1)"
+    echo "Assessed by: $(whoami)"
+    echo
+    
+    echo "=== OPEN PORTS ==="
+    nmap --open 127.0.0.1
+    echo
+    
+    echo "=== SERVICE VERSIONS ==="
+    nmap -sV 127.0.0.1
+    echo
+    
+    echo "=== VULNERABILITY SCAN ==="
+    nmap --script vuln 127.0.0.1
+    echo
+    
+    echo "=== RECOMMENDATIONS ==="
+    echo "1. Close unnecessary ports"
+    echo "2. Update services to latest versions"
+    echo "3. Configure firewall rules"
+    echo "4. Monitor for unauthorized services"
+    echo "5. Regular security assessments"
+    
+} > "$REPORT_FILE"
+
+echo "Security report saved to: $REPORT_FILE"
+cat "$REPORT_FILE"
+EOF
+
+chmod +x security_report.sh
+./security_report.sh
+Troubleshooting Common Issues
+Issue 1: Permission Denied Errors
+# If you get permission errors, use sudo
+sudo nmap -sS 127.0.0.1
+
+# Or run as regular user with TCP connect scan
+nmap -sT 127.0.0.1
+Issue 2: No Open Ports Found
+# Start some services for testing
+sudo systemctl start ssh
+sudo systemctl start apache2  # if available
+
+# Or create a simple listener
+nc -l -p 8080 &
+Issue 3: Slow Scans
+# Use timing templates for faster scans
+nmap -T4 127.0.0.1  # Aggressive timing
+nmap -T5 127.0.0.1  # Insane timing (very fast)
+
+# Scan only common ports
+nmap --top-ports 1000 127.0.0.1
+Issue 4: Netcat Not Working
+# Try different netcat variants
+which nc
+nc --help
+
+# Alternative installation
+sudo apt install netcat-traditional -y
+Lab Verification
+Verification Checklist
+Complete these tasks to verify your learning:
+
+Port Discovery: Successfully identify at least 3 open ports on localhost
+Service Identification: Determine the services running on open ports
+Banner Grabbing: Capture service banners using netcat
+Script Usage: Run at least 2 different Nmap scripts
+Report Generation: Create a comprehensive scan report
+Verification Commands
+# Verify Nmap installation and basic functionality
+nmap --version && nmap 127.0.0.1
+
+# Verify Netcat functionality
+echo "test" | nc -l -p 9999 &
+nc 127.0.0.1 9999
+
+# Verify script execution
+ls -la *.sh
+./identify_services.sh
+Conclusion
+In this lab, you have successfully learned the fundamentals of port scanning and network enumeration using industry-standard tools. You have:
+
+Mastered Nmap: Used various scanning techniques including TCP, UDP, stealth, and script scanning
+Utilized Netcat: Performed connection testing and banner grabbing
+Analyzed Services: Identified and assessed running services on your system
+Created Reports: Generated comprehensive security assessment reports
+Applied Security Concepts: Understanding the importance of port scanning in cybersecurity
+Why This Matters: Port scanning and enumeration are critical skills in cybersecurity. They help security professionals:
+
+Identify potential attack vectors
+Assess network security posture
+Discover unauthorized services
+Validate security controls
+Conduct penetration testing
+Next Steps: Practice these techniques in controlled environments, explore advanced Nmap scripts, and always remember to use these skills ethically and legally. Consider pursuing certifications like CEH (Certified Ethical Hacker) or OSCP (Offensive Security Certified Professional) to advance your cybersecurity career.
+
+Ethical Reminder: Always ensure you have proper authorization before scanning any network or system that you do not own. Unauthorized port scanning can be illegal and unethical.
