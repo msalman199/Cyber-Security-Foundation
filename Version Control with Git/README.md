@@ -6,7 +6,7 @@
 
 ---
 
-# 📚 Lab Overview
+# 📚 Overview
 
 Version control is one of the most important skills for software developers, DevOps engineers, and cybersecurity professionals. Git allows users to track file changes, collaborate efficiently, maintain audit trails, and recover previous versions of projects.
 
