@@ -1,0 +1,465 @@
+Introduction to Wireshark
+Objectives
+By the end of this lab, students will be able to:
+
+Install and configure Wireshark on a Linux system
+Capture live network traffic using Wireshark
+Apply various packet filters to analyze specific protocols (HTTP, TCP, DNS)
+Identify and analyze network anomalies and suspicious activities
+Export captured data for further analysis and reporting
+Understand the fundamentals of network packet analysis for cybersecurity purposes
+Prerequisites
+Before starting this lab, students should have:
+
+Basic understanding of networking concepts (IP addresses, ports, protocols)
+Familiarity with Linux command line interface
+Knowledge of common network protocols (HTTP, TCP, DNS)
+Understanding of basic cybersecurity principles
+Lab Environment
+Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines for this lab. Simply click Start Lab to access your pre-configured environment. No need to build your own virtual machine or install additional software.
+
+Your cloud machine comes with:
+
+Ubuntu Linux operating system
+Network connectivity for traffic generation
+Administrative privileges for packet capture
+Task 1: Installing and Configuring Wireshark
+Subtask 1.1: Install Wireshark
+First, we need to install Wireshark and its dependencies on our Linux system.
+
+# Update package repositories
+sudo apt update
+
+# Install Wireshark
+sudo apt install wireshark -y
+
+# Install additional network tools for traffic generation
+sudo apt install curl wget dnsutils -y
+Subtask 1.2: Configure User Permissions
+To capture packets without running Wireshark as root, we need to configure proper permissions.
+
+# Add current user to wireshark group
+sudo usermod -a -G wireshark $USER
+
+# Set capabilities for dumpcap (packet capture utility)
+sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
+
+# Verify the configuration
+getcap /usr/bin/dumpcap
+Note: You may need to log out and log back in for group changes to take effect.
+
+Subtask 1.3: Launch Wireshark
+Start Wireshark from the command line:
+
+# Launch Wireshark GUI
+wireshark &
+If you're using a headless system, you can use tshark (command-line version):
+
+# Check available network interfaces
+tshark -D
+Task 2: Capturing Network Traffic
+Subtask 2.1: Identify Network Interface
+Before capturing traffic, identify the active network interface.
+
+Using Wireshark GUI:
+
+Open Wireshark
+Look at the interface list on the main screen
+Identify the interface with activity (usually eth0 or ens33)
+Using Command Line:
+
+# List all network interfaces
+ip addr show
+
+# Show interface statistics
+ip -s link show
+Subtask 2.2: Start Packet Capture
+Method 1: Using Wireshark GUI
+
+Double-click on the active network interface (e.g., eth0)
+Wireshark will start capturing packets immediately
+You'll see packets appearing in real-time
+Method 2: Using tshark Command Line
+
+# Start capturing on eth0 interface (replace with your interface)
+sudo tshark -i eth0 -w capture.pcap
+
+# Capture with packet count limit
+sudo tshark -i eth0 -c 100 -w capture.pcap
+Subtask 2.3: Generate Network Traffic
+Open a new terminal window and generate various types of network traffic:
+
+# Generate HTTP traffic
+curl -I http://httpbin.org/get
+curl -I http://example.com
+
+# Generate DNS queries
+nslookup google.com
+dig facebook.com
+host github.com
+
+# Generate HTTPS traffic
+curl -I https://www.google.com
+wget -q --spider https://www.github.com
+
+# Generate continuous ping traffic
+ping -c 10 8.8.8.8
+Subtask 2.4: Stop Capture
+In Wireshark GUI: Click the red square Stop button in the toolbar
+
+In tshark: Press Ctrl+C to stop the capture
+
+Task 3: Filtering and Analyzing Packets
+Subtask 3.1: Basic Wireshark Interface Navigation
+Familiarize yourself with the Wireshark interface:
+
+Packet List Pane (top): Shows summary of each packet
+Packet Details Pane (middle): Shows detailed protocol information
+Packet Bytes Pane (bottom): Shows raw packet data in hexadecimal
+Subtask 3.2: Apply HTTP Filters
+Filter captured traffic to show only HTTP packets:
+
+Display Filter for HTTP:
+
+http
+More specific HTTP filters:
+
+# HTTP GET requests only
+http.request.method == "GET"
+
+# HTTP responses only
+http.response
+
+# HTTP traffic to specific host
+http.host == "example.com"
+
+# HTTP status codes
+http.response.code == 200
+Steps to apply filters:
+
+Type the filter in the Display Filter bar at the top
+Press Enter or click the Apply button
+Only matching packets will be displayed
+Subtask 3.3: Apply TCP Filters
+Analyze TCP traffic patterns:
+
+Basic TCP filters:
+
+# All TCP traffic
+tcp
+
+# TCP traffic on specific port
+tcp.port == 80
+
+# TCP SYN packets (connection establishment)
+tcp.flags.syn == 1
+
+# TCP connections to specific IP
+ip.addr == 8.8.8.8 and tcp
+Advanced TCP analysis:
+
+# TCP retransmissions (potential network issues)
+tcp.analysis.retransmission
+
+# TCP out-of-order packets
+tcp.analysis.out_of_order
+
+# TCP window size issues
+tcp.analysis.window_update
+Subtask 3.4: Apply DNS Filters
+Examine DNS queries and responses:
+
+DNS filters:
+
+# All DNS traffic
+dns
+
+# DNS queries only
+dns.flags.response == 0
+
+# DNS responses only
+dns.flags.response == 1
+
+# DNS queries for specific domain
+dns.qry.name contains "google"
+
+# DNS error responses
+dns.flags.rcode != 0
+Subtask 3.5: Combine Multiple Filters
+Create complex filters using logical operators:
+
+# HTTP or HTTPS traffic
+http or tls
+
+# DNS and HTTP traffic
+dns or http
+
+# Traffic to/from specific IP excluding SSH
+ip.addr == 192.168.1.1 and not ssh
+
+# Web traffic (HTTP and HTTPS)
+tcp.port == 80 or tcp.port == 443
+Task 4: Identifying Network Anomalies
+Subtask 4.1: Analyze Traffic Patterns
+Look for unusual patterns that might indicate security issues:
+
+High-frequency connections:
+
+# Filter for connections to unusual ports
+tcp.port > 1024 and tcp.port < 5000
+
+# Look for repeated connections
+tcp.flags.syn == 1
+Suspicious DNS activity:
+
+# DNS queries to unusual domains
+dns and not (dns.qry.name contains "google" or dns.qry.name contains "facebook")
+
+# DNS queries with long domain names (potential DGA)
+dns.qry.name matches ".*\..*\..*\..*\."
+Subtask 4.2: Identify Potential Security Issues
+Look for these indicators:
+
+Port Scanning Activity:
+
+Multiple TCP SYN packets to different ports
+TCP RST responses indicating closed ports
+Unusual Protocol Usage:
+
+HTTP traffic on non-standard ports
+Unencrypted protocols carrying sensitive data
+DNS Anomalies:
+
+Queries to suspicious domains
+High volume of DNS requests
+Subtask 4.3: Analyze Packet Details
+For suspicious packets:
+
+Right-click on a packet of interest
+Select Follow → TCP Stream or HTTP Stream
+Examine the complete conversation
+Look for:
+Unusual user agents
+Suspicious file transfers
+Encoded or encrypted payloads
+Task 5: Exporting Data and Analysis
+Subtask 5.1: Export Filtered Data
+Save specific packet data for further analysis:
+
+Export specific packets:
+
+Apply your desired filter
+Go to File → Export Specified Packets
+Choose format (PCAP, CSV, etc.)
+Save the file
+Command line export with tshark:
+
+# Export HTTP traffic to new file
+tshark -r capture.pcap -Y "http" -w http_traffic.pcap
+
+# Export to CSV format
+tshark -r capture.pcap -Y "http" -T csv > http_traffic.csv
+
+# Export specific fields
+tshark -r capture.pcap -Y "dns" -T fields -e dns.qry.name -e dns.resp.addr
+Subtask 5.2: Generate Traffic Statistics
+Create statistical reports:
+
+Using Wireshark GUI:
+
+Go to Statistics → Protocol Hierarchy
+View Statistics → Conversations
+Check Statistics → Endpoints
+Using tshark command line:
+
+# Protocol statistics
+tshark -r capture.pcap -q -z io,phs
+
+# Conversation statistics
+tshark -r capture.pcap -q -z conv,tcp
+
+# DNS statistics
+tshark -r capture.pcap -q -z dns,tree
+
+# HTTP statistics
+tshark -r capture.pcap -q -z http,tree
+Subtask 5.3: Create Analysis Report
+Document your findings:
+
+# Create analysis script
+cat > analyze_capture.sh << 'EOF'
+#!/bin/bash
+
+PCAP_FILE="capture.pcap"
+REPORT_FILE="network_analysis_report.txt"
+
+echo "Network Traffic Analysis Report" > $REPORT_FILE
+echo "Generated on: $(date)" >> $REPORT_FILE
+echo "=================================" >> $REPORT_FILE
+
+echo "" >> $REPORT_FILE
+echo "1. TOTAL PACKETS CAPTURED:" >> $REPORT_FILE
+tshark -r $PCAP_FILE -q -z io,stat,0 | grep "Packets" >> $REPORT_FILE
+
+echo "" >> $REPORT_FILE
+echo "2. PROTOCOL DISTRIBUTION:" >> $REPORT_FILE
+tshark -r $PCAP_FILE -q -z io,phs >> $REPORT_FILE
+
+echo "" >> $REPORT_FILE
+echo "3. TOP CONVERSATIONS:" >> $REPORT_FILE
+tshark -r $PCAP_FILE -q -z conv,tcp | head -20 >> $REPORT_FILE
+
+echo "" >> $REPORT_FILE
+echo "4. DNS QUERIES:" >> $REPORT_FILE
+tshark -r $PCAP_FILE -Y "dns.flags.response == 0" -T fields -e dns.qry.name | sort | uniq -c | sort -nr | head -10 >> $REPORT_FILE
+
+echo "" >> $REPORT_FILE
+echo "5. HTTP HOSTS:" >> $REPORT_FILE
+tshark -r $PCAP_FILE -Y "http" -T fields -e http.host | sort | uniq -c | sort -nr >> $REPORT_FILE
+
+echo "Analysis complete. Report saved to $REPORT_FILE"
+EOF
+
+# Make script executable
+chmod +x analyze_capture.sh
+
+# Run the analysis
+./analyze_capture.sh
+Task 6: Advanced Analysis Techniques
+Subtask 6.1: Time-based Analysis
+Analyze traffic patterns over time:
+
+# Traffic volume over time (1-minute intervals)
+tshark -r capture.pcap -q -z io,stat,60
+
+# Packets per second
+tshark -r capture.pcap -q -z io,stat,1
+Subtask 6.2: Geolocation Analysis
+For external IP addresses, you can perform basic geolocation:
+
+# Extract unique external IP addresses
+tshark -r capture.pcap -T fields -e ip.src -e ip.dst | tr '\t' '\n' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | grep -v '^192\.168\.' | grep -v '^10\.' | grep -v '^172\.' | sort | uniq > external_ips.txt
+
+# Display the list
+echo "External IP addresses found:"
+cat external_ips.txt
+Subtask 6.3: Security-focused Filters
+Apply security-specific filters:
+
+# Potential malware communication patterns
+# Long domain names (possible DGA)
+dns.qry.name matches ".{20,}"
+
+# Suspicious user agents
+http.user_agent contains "bot" or http.user_agent contains "crawler"
+
+# Non-standard ports for web traffic
+(tcp.port != 80 and tcp.port != 443) and http
+
+# Potential data exfiltration (large uploads)
+http.request.method == "POST" and http.content_length > 1000000
+Troubleshooting Common Issues
+Issue 1: Permission Denied Error
+Problem: Cannot capture packets due to permission issues
+
+Solution:
+
+# Ensure user is in wireshark group
+groups $USER
+
+# If not in wireshark group, add user
+sudo usermod -a -G wireshark $USER
+
+# Log out and log back in, or use:
+newgrp wireshark
+Issue 2: No Interfaces Available
+Problem: Wireshark shows no network interfaces
+
+Solution:
+
+# Check if interfaces exist
+ip link show
+
+# Restart network manager
+sudo systemctl restart NetworkManager
+
+# Check dumpcap permissions
+ls -la /usr/bin/dumpcap
+Issue 3: Capture File Too Large
+Problem: Capture file becomes too large
+
+Solution:
+
+# Use rotating capture files
+tshark -i eth0 -b filesize:100000 -b files:5 -w capture
+
+# Limit capture duration
+timeout 300 tshark -i eth0 -w capture.pcap
+Issue 4: No Traffic Visible
+Problem: Wireshark captures no packets
+
+Solution:
+
+# Check interface is up
+ip link show eth0
+
+# Generate test traffic
+ping -c 5 8.8.8.8
+
+# Check if interface is in promiscuous mode
+ip link show eth0 | grep PROMISC
+Lab Verification
+Verification Checklist
+Ensure you have completed the following:
+
+ Successfully installed and configured Wireshark
+ Captured network traffic on your local interface
+ Applied HTTP filters and identified web traffic
+ Applied TCP filters and analyzed connection patterns
+ Applied DNS filters and examined domain queries
+ Identified at least one potential network anomaly
+ Exported filtered data to a file
+ Generated a basic analysis report
+Verification Commands
+Run these commands to verify your work:
+
+# Check if capture file exists and has content
+ls -la *.pcap
+tshark -r capture.pcap -c 10
+
+# Verify different protocols were captured
+echo "HTTP packets:"
+tshark -r capture.pcap -Y "http" -c 5
+
+echo "DNS packets:"
+tshark -r capture.pcap -Y "dns" -c 5
+
+echo "TCP packets:"
+tshark -r capture.pcap -Y "tcp" -c 5
+Conclusion
+In this lab, you have successfully learned the fundamentals of network traffic analysis using Wireshark. You have gained hands-on experience in:
+
+Key Accomplishments:
+
+Installing and configuring Wireshark on a Linux system
+Capturing live network traffic from your local network interface
+Applying various packet filters to isolate specific protocols (HTTP, TCP, DNS)
+Identifying potential network anomalies and security indicators
+Exporting captured data for further analysis and reporting
+Why This Matters: Network packet analysis is a critical skill in cybersecurity. The ability to capture, filter, and analyze network traffic enables security professionals to:
+
+Detect Security Threats: Identify malicious activities, intrusion attempts, and data exfiltration
+Troubleshoot Network Issues: Diagnose connectivity problems and performance bottlenecks
+Monitor Compliance: Ensure network communications meet security policies and regulations
+Incident Response: Investigate security incidents and understand attack vectors
+Forensic Analysis: Reconstruct network events for legal and compliance purposes
+The skills you've developed in this lab form the foundation for advanced network security monitoring and are essential for cybersecurity professionals working in roles such as Security Analyst, Network Security Engineer, and Incident Response Specialist.
+
+Next Steps:
+
+Practice analyzing different types of network traffic
+Learn about advanced Wireshark features like custom protocols and scripting
+Explore automated network monitoring tools that build upon packet analysis principles
+Study common attack patterns and their network signatures
+Remember that network monitoring should always be performed in accordance with your organization's policies and applicable laws. Only monitor networks that you own or have explicit permission to analyze.
+
