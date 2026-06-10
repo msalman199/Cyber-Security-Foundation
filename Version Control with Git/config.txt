@@ -1,0 +1,4 @@
+# Configuration file for my project
+version=1.0
+author=Student
+description=Learning Git basics
