@@ -1,0 +1,445 @@
+ Windows PowerShell Fundamentals
+Objectives
+By the end of this lab, students will be able to:
+
+Execute basic PowerShell commands for file and directory management
+Create, copy, and move files using PowerShell cmdlets
+Understand PowerShell syntax and command structure
+Write simple PowerShell scripts with loops and conditional statements
+Automate basic administrative tasks using PowerShell scripting
+Navigate the PowerShell environment effectively on a Linux system
+Prerequisites
+Before starting this lab, students should have:
+
+Basic understanding of command-line interfaces
+Familiarity with file system concepts (files, directories, paths)
+Elementary knowledge of programming concepts (variables, loops, conditions)
+Access to a Linux machine with PowerShell Core installed
+Ready-to-Use Cloud Machines
+Al Nafi provides Linux-based cloud machines with PowerShell Core pre-installed. Simply click Start Lab to access your dedicated environment. No need to build or configure your own virtual machine - everything is ready to use immediately.
+
+Lab Environment Setup
+Task 1: Verify PowerShell Installation and Access
+Subtask 1.1: Launch PowerShell Core
+Open a terminal on your Linux machine
+Start PowerShell by typing the following command:
+pwsh
+You should see the PowerShell prompt that looks like this:
+PS /home/student>
+Verify your PowerShell version:
+$PSVersionTable
+Subtask 1.2: Understand PowerShell Basics
+Display help information for PowerShell:
+Get-Help
+Learn about a specific command:
+Get-Help Get-ChildItem
+List all available commands:
+Get-Command
+Task 2: File and Directory Operations
+Subtask 2.1: List Files and Directories with Get-ChildItem
+Basic Directory Listing
+List contents of the current directory:
+Get-ChildItem
+Use the alias for shorter commands:
+ls
+List contents with detailed information:
+Get-ChildItem -Force
+Advanced Listing Options
+List only directories:
+Get-ChildItem -Directory
+List only files:
+Get-ChildItem -File
+List contents recursively (including subdirectories):
+Get-ChildItem -Recurse
+Filter files by extension:
+Get-ChildItem *.txt
+List hidden files and directories:
+Get-ChildItem -Hidden
+Subtask 2.2: Create Files and Directories with New-Item
+Creating Directories
+Create a new directory for lab exercises:
+New-Item -ItemType Directory -Name "PowerShellLab"
+Create multiple directories at once:
+New-Item -ItemType Directory -Name "TestDir1", "TestDir2", "TestDir3"
+Create a nested directory structure:
+New-Item -ItemType Directory -Path "PowerShellLab/SubDir1/SubDir2" -Force
+Creating Files
+Create an empty text file:
+New-Item -ItemType File -Name "sample.txt"
+Create a file with content:
+New-Item -ItemType File -Name "greeting.txt" -Value "Hello, PowerShell World!"
+Create multiple files:
+New-Item -ItemType File -Name "file1.txt", "file2.txt", "file3.txt"
+Subtask 2.3: Copy Files and Directories with Copy-Item
+Basic File Copying
+Navigate to the PowerShellLab directory:
+Set-Location PowerShellLab
+Create a sample file to work with:
+New-Item -ItemType File -Name "original.txt" -Value "This is the original file content."
+Copy a single file:
+Copy-Item "original.txt" "copy1.txt"
+Copy a file to a different directory:
+Copy-Item "original.txt" "SubDir1/original_backup.txt"
+Advanced Copying Operations
+Copy multiple files using wildcards:
+Copy-Item *.txt "SubDir1/"
+Copy an entire directory:
+Copy-Item "SubDir1" "SubDir1_Backup" -Recurse
+Copy with confirmation prompt:
+Copy-Item "original.txt" "copy2.txt" -Confirm
+Subtask 2.4: Move Files and Directories with Move-Item
+Basic File Moving
+Create test files for moving:
+New-Item -ItemType File -Name "temp1.txt", "temp2.txt" -Value "Temporary content"
+Move a single file:
+Move-Item "temp1.txt" "SubDir1/"
+Move and rename a file simultaneously:
+Move-Item "temp2.txt" "SubDir1/renamed_temp.txt"
+Advanced Moving Operations
+Move multiple files:
+New-Item -ItemType File -Name "move1.txt", "move2.txt", "move3.txt"
+Move-Item move*.txt "SubDir2/"
+Move an entire directory:
+Move-Item "TestDir1" "PowerShellLab/"
+Task 3: PowerShell Scripting Fundamentals
+Subtask 3.1: Variables and Basic Scripting
+Working with Variables
+Create and use variables:
+$name = "PowerShell Student"
+$age = 25
+$isLearning = $true
+
+Write-Host "Name: $name"
+Write-Host "Age: $age"
+Write-Host "Learning PowerShell: $isLearning"
+Work with arrays:
+$fruits = @("Apple", "Banana", "Orange", "Grape")
+Write-Host "First fruit: $($fruits[0])"
+Write-Host "All fruits: $fruits"
+Subtask 3.2: Conditional Statements
+Basic If-Else Statements
+Create a simple condition script:
+$number = 15
+
+if ($number -gt 10) {
+    Write-Host "$number is greater than 10"
+} else {
+    Write-Host "$number is not greater than 10"
+}
+Multiple conditions with elseif:
+$score = 85
+
+if ($score -ge 90) {
+    Write-Host "Grade: A"
+} elseif ($score -ge 80) {
+    Write-Host "Grade: B"
+} elseif ($score -ge 70) {
+    Write-Host "Grade: C"
+} else {
+    Write-Host "Grade: F"
+}
+Switch Statements
+Create a switch statement example:
+$day = "Monday"
+
+switch ($day) {
+    "Monday" { Write-Host "Start of the work week!" }
+    "Friday" { Write-Host "TGIF!" }
+    "Saturday" { Write-Host "Weekend time!" }
+    "Sunday" { Write-Host "Rest day!" }
+    default { Write-Host "Regular day" }
+}
+Subtask 3.3: Loops and Iteration
+For Loops
+Basic for loop:
+for ($i = 1; $i -le 5; $i++) {
+    Write-Host "Count: $i"
+}
+For loop with file operations:
+for ($i = 1; $i -le 3; $i++) {
+    New-Item -ItemType File -Name "loop_file_$i.txt" -Value "File number $i created by loop"
+}
+ForEach Loops
+Iterate through an array:
+$colors = @("Red", "Green", "Blue", "Yellow")
+
+foreach ($color in $colors) {
+    Write-Host "Processing color: $color"
+}
+Process files in a directory:
+$files = Get-ChildItem *.txt
+
+foreach ($file in $files) {
+    Write-Host "File: $($file.Name) - Size: $($file.Length) bytes"
+}
+While Loops
+Basic while loop:
+$counter = 1
+
+while ($counter -le 5) {
+    Write-Host "While loop iteration: $counter"
+    $counter++
+}
+Subtask 3.4: Creating Complete Scripts
+Script 1: File Management Automation
+Create a comprehensive file management script:
+# File Management Automation Script
+Write-Host "=== File Management Automation ===" -ForegroundColor Green
+
+# Create project directory structure
+$projectName = "MyProject"
+$directories = @("src", "docs", "tests", "config")
+
+Write-Host "Creating project: $projectName"
+New-Item -ItemType Directory -Name $projectName -Force
+
+Set-Location $projectName
+
+foreach ($dir in $directories) {
+    New-Item -ItemType Directory -Name $dir -Force
+    Write-Host "Created directory: $dir" -ForegroundColor Yellow
+}
+
+# Create sample files
+$sampleFiles = @{
+    "src/main.ps1" = "# Main PowerShell script"
+    "docs/README.md" = "# Project Documentation"
+    "tests/test.ps1" = "# Test script"
+    "config/settings.json" = '{"version": "1.0"}'
+}
+
+foreach ($file in $sampleFiles.Keys) {
+    New-Item -ItemType File -Path $file -Value $sampleFiles[$file] -Force
+    Write-Host "Created file: $file" -ForegroundColor Cyan
+}
+
+Write-Host "Project structure created successfully!" -ForegroundColor Green
+Script 2: System Information Gathering
+Create a system information script:
+# System Information Script
+Write-Host "=== System Information Report ===" -ForegroundColor Magenta
+
+# Get PowerShell version
+Write-Host "`nPowerShell Version:" -ForegroundColor Yellow
+$PSVersionTable.PSVersion
+
+# Get current location
+Write-Host "`nCurrent Location:" -ForegroundColor Yellow
+Get-Location
+
+# Count files and directories
+$items = Get-ChildItem
+$fileCount = ($items | Where-Object { -not $_.PSIsContainer }).Count
+$dirCount = ($items | Where-Object { $_.PSIsContainer }).Count
+
+Write-Host "`nDirectory Contents:" -ForegroundColor Yellow
+Write-Host "Files: $fileCount"
+Write-Host "Directories: $dirCount"
+
+# Get largest files
+Write-Host "`nLargest Files:" -ForegroundColor Yellow
+Get-ChildItem -File | Sort-Object Length -Descending | Select-Object -First 5 | ForEach-Object {
+    Write-Host "$($_.Name): $($_.Length) bytes"
+}
+
+Write-Host "`nReport completed!" -ForegroundColor Green
+Script 3: Interactive File Organizer
+Create an interactive file organization script:
+# Interactive File Organizer
+Write-Host "=== Interactive File Organizer ===" -ForegroundColor Blue
+
+# Get file extensions in current directory
+$extensions = Get-ChildItem -File | ForEach-Object { $_.Extension } | Sort-Object -Unique
+
+if ($extensions.Count -eq 0) {
+    Write-Host "No files found in current directory." -ForegroundColor Red
+    exit
+}
+
+Write-Host "`nFound file extensions:" -ForegroundColor Yellow
+for ($i = 0; $i -lt $extensions.Count; $i++) {
+    Write-Host "$($i + 1). $($extensions[$i])"
+}
+
+# Create directories for each extension
+foreach ($ext in $extensions) {
+    if ($ext -ne "") {
+        $folderName = $ext.TrimStart('.') + "_files"
+        New-Item -ItemType Directory -Name $folderName -Force | Out-Null
+        Write-Host "Created folder: $folderName" -ForegroundColor Green
+    }
+}
+
+# Move files to appropriate directories
+foreach ($ext in $extensions) {
+    if ($ext -ne "") {
+        $folderName = $ext.TrimStart('.') + "_files"
+        $filesToMove = Get-ChildItem -File | Where-Object { $_.Extension -eq $ext }
+        
+        foreach ($file in $filesToMove) {
+            Move-Item $file.FullName "$folderName/"
+            Write-Host "Moved $($file.Name) to $folderName/" -ForegroundColor Cyan
+        }
+    }
+}
+
+Write-Host "`nFile organization completed!" -ForegroundColor Green
+Task 4: Practical Exercises and Verification
+Subtask 4.1: Hands-On Practice Exercises
+Exercise 1: Directory Navigation and File Creation
+Navigate back to your home directory:
+Set-Location ~
+Create a practice directory structure:
+New-Item -ItemType Directory -Path "Practice/Level1/Level2" -Force
+Create files at different levels:
+New-Item -ItemType File -Path "Practice/root_file.txt" -Value "Root level file"
+New-Item -ItemType File -Path "Practice/Level1/level1_file.txt" -Value "Level 1 file"
+New-Item -ItemType File -Path "Practice/Level1/Level2/level2_file.txt" -Value "Level 2 file"
+Verify the structure:
+Get-ChildItem "Practice" -Recurse
+Exercise 2: Bulk File Operations
+Create multiple test files:
+Set-Location Practice
+for ($i = 1; $i -le 10; $i++) {
+    New-Item -ItemType File -Name "test_$i.txt" -Value "Test file number $i"
+}
+Copy all test files to Level1:
+Copy-Item test_*.txt Level1/
+Move files with even numbers to Level2:
+Move-Item test_*[02468].txt Level1/Level2/
+Subtask 4.2: Script Testing and Validation
+Test Script Execution
+Create a validation script:
+# Validation Script
+Write-Host "=== Lab Validation Script ===" -ForegroundColor Magenta
+
+$testsPassed = 0
+$totalTests = 0
+
+# Test 1: Check if PowerShellLab directory exists
+$totalTests++
+if (Test-Path "PowerShellLab") {
+    Write-Host "✓ PowerShellLab directory exists" -ForegroundColor Green
+    $testsPassed++
+} else {
+    Write-Host "✗ PowerShellLab directory missing" -ForegroundColor Red
+}
+
+# Test 2: Check if Practice directory exists
+$totalTests++
+if (Test-Path "Practice") {
+    Write-Host "✓ Practice directory exists" -ForegroundColor Green
+    $testsPassed++
+} else {
+    Write-Host "✗ Practice directory missing" -ForegroundColor Red
+}
+
+# Test 3: Count files in current directory
+$totalTests++
+$fileCount = (Get-ChildItem -File).Count
+if ($fileCount -gt 0) {
+    Write-Host "✓ Files found in current directory ($fileCount files)" -ForegroundColor Green
+    $testsPassed++
+} else {
+    Write-Host "✗ No files found in current directory" -ForegroundColor Red
+}
+
+# Display results
+Write-Host "`n=== Validation Results ===" -ForegroundColor Yellow
+Write-Host "Tests Passed: $testsPassed/$totalTests"
+
+if ($testsPassed -eq $totalTests) {
+    Write-Host "All tests passed! Lab completed successfully!" -ForegroundColor Green
+} else {
+    Write-Host "Some tests failed. Please review the lab steps." -ForegroundColor Red
+}
+Troubleshooting Tips
+Common Issues and Solutions
+Issue 1: PowerShell Command Not Found
+Problem: pwsh: command not found
+
+Solution:
+
+# Install PowerShell Core on Ubuntu/Debian
+sudo apt update
+sudo apt install -y powershell
+Issue 2: Permission Denied Errors
+Problem: Cannot create files or directories
+
+Solution:
+
+# Check current permissions
+Get-Location
+# Ensure you're in a writable directory like your home folder
+Set-Location ~
+Issue 3: Script Execution Policy
+Problem: Scripts won't run due to execution policy
+
+Solution:
+
+# Check current execution policy
+Get-ExecutionPolicy
+# Set execution policy for current user
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Issue 4: Path Not Found Errors
+Problem: Cannot find specified path
+
+Solution:
+
+# Always verify paths exist before operations
+Test-Path "your/path/here"
+# Use absolute paths when in doubt
+$fullPath = Resolve-Path "relative/path"
+Key PowerShell Concepts Summary
+Essential Cmdlets Learned
+Get-ChildItem: List directory contents
+New-Item: Create files and directories
+Copy-Item: Copy files and directories
+Move-Item: Move and rename files and directories
+Set-Location: Change current directory
+Test-Path: Verify if paths exist
+PowerShell Syntax Rules
+Cmdlet Structure: Verb-Noun format (Get-ChildItem, New-Item)
+Parameters: Use -ParameterName Value format
+Variables: Start with $ symbol
+Comments: Use # for single-line comments
+String Interpolation: Use "$variable" for variable expansion
+Best Practices Applied
+Use descriptive variable names
+Include error handling where appropriate
+Comment your scripts for clarity
+Test scripts in small sections
+Use consistent formatting and indentation
+Conclusion
+In this lab, you have successfully learned and practiced fundamental PowerShell operations on a Linux system. You have accomplished the following key objectives:
+
+What You Accomplished
+Mastered Basic File Operations: You learned to list, create, copy, and move files and directories using PowerShell cmdlets, providing you with essential system administration skills.
+
+Developed Scripting Skills: You created and executed PowerShell scripts with variables, loops, and conditional statements, building a foundation for automation and task scripting.
+
+Gained Practical Experience: Through hands-on exercises, you applied PowerShell concepts to real-world scenarios like file organization, system information gathering, and bulk operations.
+
+Built Automation Capabilities: You learned to automate repetitive tasks using PowerShell scripts, which is crucial for efficient system administration and cybersecurity operations.
+
+Why This Matters for Cybersecurity
+PowerShell is a critical tool in cybersecurity for several reasons:
+
+System Administration: Automate security configurations and monitoring tasks
+Incident Response: Quickly gather system information and perform forensic analysis
+Security Automation: Create scripts to detect and respond to security threats
+Log Analysis: Process and analyze security logs efficiently
+Compliance Reporting: Generate automated reports for security compliance
+Next Steps
+With these PowerShell fundamentals, you are now prepared to:
+
+Explore advanced PowerShell features like functions and modules
+Learn PowerShell remoting for managing multiple systems
+Apply PowerShell in cybersecurity contexts such as threat hunting
+Integrate PowerShell with other security tools and frameworks
+Develop more complex automation scripts for security operations
+The skills you have developed in this lab form the foundation for advanced system administration and cybersecurity practices using PowerShell across different operating systems.
+
+Lab Terminal
+
+Instructions
