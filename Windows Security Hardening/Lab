@@ -1,0 +1,431 @@
+Windows Security Hardening
+Objectives
+By the end of this lab, students will be able to:
+
+Configure Windows security settings using PowerShell simulation on Linux
+Create and manage scheduled tasks for security monitoring
+Monitor system logs for security events and anomalies
+Write scripts to detect unauthorized changes in system configurations
+Implement basic security hardening techniques
+Prerequisites
+Basic command-line operations knowledge
+Familiarity with text editors (nano, vim)
+Understanding of file permissions
+Basic scripting concepts
+Lab Environment
+Al Nafi Cloud Environment: Click Start Lab to access your pre-configured Linux machine with:
+
+PowerShell Core installed
+Bash scripting environment
+System monitoring tools
+Log analysis utilities
+Task 1: Configure Security Policies with PowerShell
+Step 1: Verify PowerShell Installation
+# Check PowerShell version
+pwsh --version
+
+# Create lab directory structure
+mkdir -p ~/security-lab/{scripts,logs,config,monitoring}
+cd ~/security-lab
+Step 2: Create Security Configuration Script
+Create scripts/security-config.ps1:
+
+#!/usr/bin/env pwsh
+
+# TODO: Define security policies hashtable with the following keys:
+# - PasswordComplexity, MinPasswordLength, AccountLockoutThreshold
+# - MaxPasswordAge, AuditLogonEvents, FirewallStatus
+
+$SecurityPolicies = @{
+    # TODO: Add security policy key-value pairs
+}
+
+# TODO: Convert hashtable to JSON and save to ../config/security-config.json
+# Hint: Use ConvertTo-Json and Out-File
+
+# TODO: Display configured policies using foreach loop
+# Hint: Use Write-Host with -ForegroundColor for colored output
+
+# TODO: Create registry security settings hashtable
+$RegistrySettings = @{
+    # TODO: Add registry settings (DisableAutoRun, EnableFirewall, etc.)
+}
+
+# TODO: Save registry settings to ../config/registry-security.json
+
+# TODO: Display success message
+Step 3: Execute and Verify Configuration
+# Make script executable
+chmod +x scripts/security-config.ps1
+
+# Run the script
+pwsh scripts/security-config.ps1
+
+# TODO: Verify configuration files were created
+# Hint: Use cat and jq to view JSON files
+Expected Output: JSON configuration files in config/ directory with security policies and registry settings.
+
+Task 2: Create Scheduled Security Tasks
+Step 1: Define Scheduled Tasks
+Create scripts/create-scheduled-tasks.ps1:
+
+#!/usr/bin/env pwsh
+
+# TODO: Create array of hashtables for scheduled tasks
+# Each task should have: Name, Description, Schedule, Script, Status
+
+$ScheduledTasks = @(
+    @{
+        Name = "SecurityLogMonitor"
+        # TODO: Add remaining properties
+    },
+    @{
+        Name = "FileIntegrityCheck"
+        # TODO: Add remaining properties
+    }
+    # TODO: Add 2 more tasks (UnauthorizedChangeDetector, SecurityReportGenerator)
+)
+
+# TODO: Save tasks to ../config/scheduled-tasks.json
+
+# TODO: Display each task with formatted output
+
+# TODO: Generate cron job entries for Linux simulation
+# Format: "0 2 * * * /path/to/script.sh"
+# Save to ../config/crontab-security
+Step 2: Create Monitoring Scripts
+Create scripts/security-log-monitor.sh:
+
+#!/bin/bash
+
+LOG_FILE="$HOME/security-lab/logs/security-monitor-$(date +%Y%m%d).log"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+# TODO: Log start message with timestamp
+
+# TODO: Check authentication logs for failures
+# Hint: grep /var/log/auth.log for "authentication failure"
+
+# TODO: Check system logs for errors/warnings
+# Hint: grep /var/log/syslog for "error|warning"
+
+# TODO: Check network connections
+# Hint: Use netstat -tuln
+
+# TODO: Log completion message
+Create scripts/file-integrity-check.sh:
+
+#!/bin/bash
+
+LOG_FILE="$HOME/security-lab/logs/integrity-check-$(date +%Y%m%d).log"
+BASELINE_DIR="$HOME/security-lab/config/baselines"
+
+# TODO: Create baseline directory if not exists
+
+# TODO: Define array of critical files to monitor
+CRITICAL_FILES=(
+    "/etc/passwd"
+    # TODO: Add /etc/shadow, /etc/sudoers, /etc/ssh/sshd_config
+)
+
+# TODO: For each file:
+#   1. Calculate current SHA256 hash
+#   2. Compare with baseline (if exists)
+#   3. Alert if different, or create baseline if new
+# Hint: Use sha256sum command
+
+# TODO: Log completion message
+Step 3: Make Scripts Executable
+chmod +x scripts/security-log-monitor.sh
+chmod +x scripts/file-integrity-check.sh
+
+# TODO: Test both scripts manually
+Task 3: Implement Log Monitoring
+Step 1: Create Advanced Log Analysis Script
+Create scripts/advanced-log-monitor.sh:
+
+#!/bin/bash
+
+REPORT_FILE="$HOME/security-lab/logs/security-analysis-$(date +%Y%m%d-%H%M).log"
+
+# TODO: Create function analyze_auth_logs()
+# Count failed and successful logins
+# Display recent failed attempts
+
+analyze_auth_logs() {
+    # TODO: Count failed login attempts
+    # Hint: grep "authentication failure" /var/log/auth.log | wc -l
+    
+    # TODO: Count successful logins
+    # Hint: grep "session opened" /var/log/auth.log | wc -l
+    
+    # TODO: Show last 5 failed attempts
+}
+
+# TODO: Create function analyze_system_logs()
+# Count errors and warnings
+# Show critical events
+
+analyze_system_logs() {
+    # TODO: Count system errors
+    # TODO: Count system warnings
+    # TODO: Display recent critical events
+}
+
+# TODO: Create function analyze_processes()
+# Show top CPU processes
+# List listening network services
+
+analyze_processes() {
+    # TODO: Use ps aux --sort=-%cpu
+    # TODO: Use netstat -tuln | grep LISTEN
+}
+
+# TODO: Create function analyze_disk_usage()
+# Show disk usage
+# Alert on partitions >90% full
+
+analyze_disk_usage() {
+    # TODO: Use df -h
+    # TODO: Use awk to filter partitions >90%
+}
+
+# TODO: Call all analysis functions
+# TODO: Generate summary report
+Step 2: Create Real-time Monitoring
+Create scripts/realtime-monitor.sh:
+
+#!/bin/bash
+
+LOG_FILE="$HOME/security-lab/logs/realtime-monitor.log"
+ALERT_FILE="$HOME/security-lab/logs/security-alerts.log"
+
+# TODO: Create log_event() function
+# Format: [timestamp] message
+
+log_event() {
+    # TODO: Implement logging with timestamp
+}
+
+# TODO: Create create_alert() function
+# Format: [timestamp] ALERT: message
+
+create_alert() {
+    # TODO: Implement alert logging
+}
+
+# TODO: Create monitor_auth() function
+# Monitor /var/log/auth.log in real-time
+# Alert on authentication failures and invalid users
+
+monitor_auth() {
+    # TODO: Use tail -f /var/log/auth.log
+    # TODO: Pipe to while read loop
+    # TODO: Check for "authentication failure" and "invalid user"
+}
+
+# TODO: Create monitor_system() function
+# Monitor /var/log/syslog in real-time
+# Alert on errors and critical events
+
+monitor_system() {
+    # TODO: Use tail -f /var/log/syslog
+    # TODO: Check for "error|critical|emergency"
+}
+
+# TODO: Start both monitoring functions in background
+# TODO: Add main loop to check system load every 10 seconds
+Task 4: Detect Unauthorized Changes
+Step 1: Create Change Detection System
+Create scripts/change-detector.sh:
+
+#!/bin/bash
+
+LOG_FILE="$HOME/security-lab/logs/change-detection-$(date +%Y%m%d).log"
+BASELINE_DIR="$HOME/security-lab/config/baselines"
+
+# TODO: Create function check_file_changes(file_path)
+# Compare current file stats with baseline
+# Alert if modified
+
+check_file_changes() {
+    local file_path="$1"
+    # TODO: Get current file stats (modification time, size, permissions)
+    # Hint: Use stat -c "%Y %s %a" $file_path
+    
+    # TODO: Compare with baseline file
+    # TODO: Alert if different or create baseline if new
+}
+
+# TODO: Create function check_user_changes()
+# Monitor /etc/passwd and /etc/shadow for changes
+
+check_user_changes() {
+    # TODO: Calculate SHA256 hash of /etc/passwd
+    # TODO: Compare with baseline
+    # TODO: Show diff if changed
+    # TODO: Repeat for /etc/shadow
+}
+
+# TODO: Create function check_network_changes()
+# Monitor /etc/hosts for modifications
+
+check_network_changes() {
+    # TODO: Calculate hash of /etc/hosts
+    # TODO: Compare with baseline
+    # TODO: Show diff if changed
+}
+
+# TODO: Create function check_service_changes()
+# Monitor running services
+
+check_service_changes() {
+    # TODO: List running services
+    # Hint: systemctl list-units --type=service --state=running
+    # TODO: Compare with baseline
+    # TODO: Show diff if changed
+}
+
+# TODO: Define CRITICAL_FILES array
+CRITICAL_FILES=(
+    # TODO: Add critical system files
+)
+
+# TODO: Run all check functions
+# TODO: Log results
+Step 2: Create Security Report Generator
+Create scripts/security-report.sh:
+
+#!/bin/bash
+
+REPORT_FILE="$HOME/security-lab/logs/security-report-$(date +%Y%m%d-%H%M).html"
+
+# TODO: Create HTML report header
+# Include title, timestamp, and CSS styling
+
+# TODO: Create function generate_config_summary()
+# Display security policies and registry settings from JSON files
+
+generate_config_summary() {
+    # TODO: Read and format security-config.json
+    # TODO: Read and format registry-security.json
+    # TODO: Return HTML formatted content
+}
+
+# TODO: Create function generate_tasks_summary()
+# Display scheduled tasks in HTML table
+
+generate_tasks_summary() {
+    # TODO: Parse scheduled-tasks.json
+    # TODO: Create HTML table with task details
+}
+
+# TODO: Create function generate_monitoring_summary()
+# Show recent security events and alerts
+
+generate_monitoring_summary() {
+    # TODO: Count log entries from all log files
+    # TODO: Count alerts (grep for ALERT|ERROR|CRITICAL)
+    # TODO: Display recent alerts
+}
+
+# TODO: Create function generate_system_status()
+# Show disk usage, memory usage, load average
+
+generate_system_status() {
+    # TODO: Get disk usage (df -h)
+    # TODO: Get memory usage (free command)
+    # TODO: Get load average (uptime command)
+    # TODO: Format as HTML table
+}
+
+# TODO: Call all generation functions
+# TODO: Add sections to HTML report
+# TODO: Close HTML tags
+# TODO: Display report location
+Step 3: Test Change Detection
+# Make scripts executable
+chmod +x scripts/change-detector.sh
+chmod +x scripts/security-report.sh
+
+# TODO: Run change detector to create baselines
+./scripts/change-detector.sh
+
+# TODO: Modify a monitored file (e.g., /etc/hosts)
+# Add a test entry: echo "127.0.0.1 test.local" | sudo tee -a /etc/hosts
+
+# TODO: Run change detector again to detect modification
+
+# TODO: Generate security report
+./scripts/security-report.sh
+
+# TODO: View the HTML report
+# Hint: Use a browser or cat command
+Expected Outcomes
+After completing this lab, you should have:
+
+Configuration Files: JSON files with security policies and registry settings
+Scheduled Tasks: PowerShell and bash scripts for automated monitoring
+Monitoring Scripts: Real-time and periodic log analysis tools
+Change Detection: System to detect unauthorized modifications
+Security Reports: HTML reports summarizing security status
+Baseline Files: Reference files for integrity checking
+Verification Checklist:
+
+ Security configuration files created in config/ directory
+ All monitoring scripts are executable
+ Log files generated in logs/ directory
+ Baselines created for critical files
+ HTML security report generated successfully
+ Change detection alerts working
+Troubleshooting Tips
+Issue: PowerShell script fails with permission error
+
+Solution: Ensure script has execute permissions (chmod +x script.ps1)
+Check file paths are correct relative to script location
+Issue: Log monitoring shows no authentication events
+
+Solution: Authentication logs may require sudo access
+Use sudo grep for /var/log/auth.log access
+Verify log files exist on your system
+Issue: Change detector creates false positives
+
+Solution: Delete baseline files and recreate after system is stable
+Some files change frequently (e.g., logs) - exclude from monitoring
+Use file content hash instead of modification time for better accuracy
+Issue: HTML report not displaying correctly
+
+Solution: Verify all HTML tags are properly closed
+Check JSON files exist before parsing
+Use jq to validate JSON syntax
+Issue: Scheduled tasks not executing
+
+Solution: Verify cron service is running (systemctl status cron)
+Check script paths are absolute in crontab
+Review cron logs: grep CRON /var/log/syslog
+Conclusion
+In this lab, you implemented a comprehensive Windows security hardening simulation on Linux. You created PowerShell scripts to configure security policies, developed automated monitoring tasks, implemented log analysis tools, and built a change detection system. These skills are fundamental for system administrators and security professionals.
+
+Key Takeaways:
+
+Security hardening requires multiple layers of protection
+Automated monitoring is essential for detecting threats early
+Change detection helps identify unauthorized modifications
+Regular security reports provide visibility into system status
+PowerShell provides cross-platform security management capabilities
+Next Steps:
+
+Enhance scripts with email alerting capabilities
+Integrate with SIEM (Security Information and Event Management) systems
+Implement automated response to security events
+Explore Windows-specific security tools (Group Policy, Windows Defender)
+Study compliance frameworks (CIS benchmarks, NIST guidelines)
+Best Practices Learned:
+
+Always maintain baselines for critical system files
+Log all security events with timestamps
+Generate regular security reports for review
+Automate repetitive security tasks
+Monitor both system and application logs
+Document all security configurations
+Remember: Security is an ongoing process, not a one-time configuration. Regularly review and update your security measures to address new threats.
