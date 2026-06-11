@@ -1,0 +1,658 @@
+File Integrity Monitoring
+Objectives
+By the end of this lab, students will be able to:
+
+Understand the importance of file integrity monitoring in cybersecurity
+Configure and use auditd to track file changes and unauthorized access
+Create automated scripts for file integrity checking
+Monitor critical system directories for unauthorized modifications
+Analyze audit logs to identify potential security threats
+Implement proactive security measures using open-source tools
+Prerequisites
+Before starting this lab, students should have:
+
+Basic knowledge of Linux command line operations
+Understanding of file permissions and directory structures
+Familiarity with text editors (nano, vim, or gedit)
+Basic scripting knowledge (bash)
+Understanding of cybersecurity fundamentals
+Lab Environment
+Al Nafi Cloud Machine: This lab runs entirely on a single Linux-based cloud machine provided by Al Nafi. Simply click Start Lab to access your pre-configured environment. No additional VM setup is required.
+
+System Requirements:
+
+Ubuntu 20.04 LTS or newer
+Root/sudo access
+Internet connectivity for package installation
+Task 1: Setting Up and Using auditd in Linux
+Subtask 1.1: Installing and Configuring auditd
+Step 1: Update your system and install auditd
+
+sudo apt update
+sudo apt install auditd audispd-plugins -y
+Step 2: Check if auditd service is running
+
+sudo systemctl status auditd
+Step 3: Start and enable auditd if not already running
+
+sudo systemctl start auditd
+sudo systemctl enable auditd
+Step 4: Verify auditd version and configuration
+
+auditctl --version
+sudo auditctl -s
+Subtask 1.2: Creating Basic Audit Rules
+Step 1: Create a test directory and file for monitoring
+
+mkdir -p /home/$USER/secure_files
+echo "This is a sensitive document" > /home/$USER/secure_files/important.txt
+echo "Configuration data" > /home/$USER/secure_files/config.conf
+Step 2: Add audit rules to monitor file access
+
+# Monitor file access (read/write/execute)
+sudo auditctl -w /home/$USER/secure_files -p rwxa -k file_access
+
+# Monitor file attribute changes
+sudo auditctl -w /home/$USER/secure_files -p a -k file_attributes
+
+# Monitor system configuration files
+sudo auditctl -w /etc/passwd -p wa -k passwd_changes
+sudo auditctl -w /etc/shadow -p wa -k shadow_changes
+Step 3: List current audit rules
+
+sudo auditctl -l
+Step 4: Test the monitoring by accessing files
+
+# Read the file (should trigger audit)
+cat /home/$USER/secure_files/important.txt
+
+# Modify the file (should trigger audit)
+echo "Modified content" >> /home/$USER/secure_files/important.txt
+
+# Change file permissions (should trigger audit)
+chmod 755 /home/$USER/secure_files/important.txt
+Subtask 1.3: Analyzing Audit Logs
+Step 1: Search for audit events related to our test files
+
+sudo ausearch -k file_access
+Step 2: Search for recent audit events (last 10 minutes)
+
+sudo ausearch -ts recent
+Step 3: Generate a summary report
+
+sudo aureport -f
+sudo aureport -au
+Step 4: Create a detailed audit report script
+
+nano audit_report.sh
+Add the following content:
+
+#!/bin/bash
+
+echo "=== File Integrity Monitoring Report ==="
+echo "Generated on: $(date)"
+echo ""
+
+echo "=== Recent File Access Events ==="
+sudo ausearch -k file_access -ts today 2>/dev/null | head -20
+
+echo ""
+echo "=== Password File Changes ==="
+sudo ausearch -k passwd_changes -ts today 2>/dev/null
+
+echo ""
+echo "=== Shadow File Changes ==="
+sudo ausearch -k shadow_changes -ts today 2>/dev/null
+
+echo ""
+echo "=== File Summary Report ==="
+sudo aureport -f 2>/dev/null | tail -10
+
+echo ""
+echo "=== Authentication Summary ==="
+sudo aureport -au 2>/dev/null | tail -10
+Step 5: Make the script executable and run it
+
+chmod +x audit_report.sh
+./audit_report.sh
+Task 2: Creating Automated File Integrity Check Scripts
+Subtask 2.1: Basic File Integrity Checker Using MD5
+Step 1: Create a baseline integrity checker script
+
+nano file_integrity_checker.sh
+Add the following content:
+
+#!/bin/bash
+
+# File Integrity Monitoring Script
+# This script creates checksums for files and compares them
+
+MONITOR_DIR="/home/$USER/secure_files"
+BASELINE_FILE="/home/$USER/file_baselines.txt"
+REPORT_FILE="/home/$USER/integrity_report_$(date +%Y%m%d_%H%M%S).txt"
+
+# Function to create baseline
+create_baseline() {
+    echo "Creating baseline for directory: $MONITOR_DIR"
+    if [ -d "$MONITOR_DIR" ]; then
+        find "$MONITOR_DIR" -type f -exec md5sum {} \; > "$BASELINE_FILE"
+        echo "Baseline created: $BASELINE_FILE"
+        echo "Files monitored: $(wc -l < "$BASELINE_FILE")"
+    else
+        echo "Error: Directory $MONITOR_DIR does not exist"
+        exit 1
+    fi
+}
+
+# Function to check integrity
+check_integrity() {
+    echo "Checking file integrity against baseline..."
+    echo "Integrity Check Report - $(date)" > "$REPORT_FILE"
+    echo "======================================" >> "$REPORT_FILE"
+    
+    if [ ! -f "$BASELINE_FILE" ]; then
+        echo "Error: Baseline file not found. Run with -c to create baseline first."
+        exit 1
+    fi
+    
+    # Check current checksums against baseline
+    CHANGES_FOUND=0
+    
+    while IFS= read -r line; do
+        EXPECTED_HASH=$(echo "$line" | cut -d' ' -f1)
+        FILE_PATH=$(echo "$line" | cut -d' ' -f3-)
+        
+        if [ -f "$FILE_PATH" ]; then
+            CURRENT_HASH=$(md5sum "$FILE_PATH" | cut -d' ' -f1)
+            if [ "$EXPECTED_HASH" != "$CURRENT_HASH" ]; then
+                echo "CHANGED: $FILE_PATH" >> "$REPORT_FILE"
+                echo "  Expected: $EXPECTED_HASH" >> "$REPORT_FILE"
+                echo "  Current:  $CURRENT_HASH" >> "$REPORT_FILE"
+                echo "  Time: $(date)" >> "$REPORT_FILE"
+                echo "" >> "$REPORT_FILE"
+                CHANGES_FOUND=1
+            fi
+        else
+            echo "DELETED: $FILE_PATH" >> "$REPORT_FILE"
+            echo "  Time: $(date)" >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            CHANGES_FOUND=1
+        fi
+    done < "$BASELINE_FILE"
+    
+    # Check for new files
+    find "$MONITOR_DIR" -type f | while read -r file; do
+        if ! grep -q "$file" "$BASELINE_FILE"; then
+            echo "NEW FILE: $file" >> "$REPORT_FILE"
+            echo "  Hash: $(md5sum "$file" | cut -d' ' -f1)" >> "$REPORT_FILE"
+            echo "  Time: $(date)" >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            CHANGES_FOUND=1
+        fi
+    done
+    
+    if [ $CHANGES_FOUND -eq 0 ]; then
+        echo "No changes detected" >> "$REPORT_FILE"
+    fi
+    
+    echo "Integrity check complete. Report saved: $REPORT_FILE"
+    cat "$REPORT_FILE"
+}
+
+# Main script logic
+case "$1" in
+    -c|--create)
+        create_baseline
+        ;;
+    -s|--scan)
+        check_integrity
+        ;;
+    *)
+        echo "Usage: $0 {-c|--create|-s|--scan}"
+        echo "  -c, --create    Create baseline checksums"
+        echo "  -s, --scan      Scan for changes against baseline"
+        exit 1
+        ;;
+esac
+Step 2: Make the script executable
+
+chmod +x file_integrity_checker.sh
+Step 3: Create initial baseline
+
+./file_integrity_checker.sh -c
+Step 4: Test the integrity checker by modifying a file
+
+echo "This file has been modified" >> /home/$USER/secure_files/important.txt
+Step 5: Run integrity check
+
+./file_integrity_checker.sh -s
+Subtask 2.2: Advanced Integrity Monitoring with inotify
+Step 1: Install inotify tools
+
+sudo apt install inotify-tools -y
+Step 2: Create real-time monitoring script
+
+nano realtime_monitor.sh
+Add the following content:
+
+#!/bin/bash
+
+# Real-time File Integrity Monitor using inotify
+MONITOR_DIR="/home/$USER/secure_files"
+LOG_FILE="/home/$USER/realtime_monitor.log"
+
+echo "Starting real-time monitoring of: $MONITOR_DIR"
+echo "Log file: $LOG_FILE"
+echo "Press Ctrl+C to stop monitoring"
+
+# Create log file with header
+echo "Real-time File Monitoring Log - Started $(date)" > "$LOG_FILE"
+echo "=============================================" >> "$LOG_FILE"
+
+# Monitor directory for changes
+inotifywait -m -r -e modify,create,delete,move,attrib "$MONITOR_DIR" --format '%T %w%f %e' --timefmt '%Y-%m-%d %H:%M:%S' | while read -r event; do
+    echo "$event" >> "$LOG_FILE"
+    echo "ALERT: $event"
+    
+    # Send alert for critical events
+    if echo "$event" | grep -q "DELETE\|MOVE"; then
+        echo "CRITICAL: File deletion or move detected at $(date)" >> "$LOG_FILE"
+    fi
+done
+Step 3: Make the script executable
+
+chmod +x realtime_monitor.sh
+Step 4: Test real-time monitoring (run in background)
+
+./realtime_monitor.sh &
+MONITOR_PID=$!
+Step 5: Generate test events
+
+# Create a new file
+echo "New test file" > /home/$USER/secure_files/test_new.txt
+
+# Modify existing file
+echo "Additional content" >> /home/$USER/secure_files/config.conf
+
+# Change permissions
+chmod 600 /home/$USER/secure_files/test_new.txt
+
+# Delete a file
+rm /home/$USER/secure_files/test_new.txt
+Step 6: Check monitoring results
+
+sleep 2
+cat /home/$USER/realtime_monitor.log
+Step 7: Stop the monitoring process
+
+kill $MONITOR_PID
+Task 3: Monitoring Critical Directories
+Subtask 3.1: Setting Up Comprehensive Directory Monitoring
+Step 1: Create a comprehensive monitoring configuration
+
+nano critical_dirs_monitor.sh
+Add the following content:
+
+#!/bin/bash
+
+# Critical Directory Monitoring Script
+# Monitors system-critical directories for unauthorized changes
+
+# Define critical directories to monitor
+CRITICAL_DIRS=(
+    "/etc"
+    "/home/$USER/secure_files"
+    "/var/log"
+    "/usr/bin"
+    "/usr/sbin"
+)
+
+LOG_DIR="/home/$USER/monitoring_logs"
+MAIN_LOG="$LOG_DIR/critical_monitor.log"
+
+# Create log directory
+mkdir -p "$LOG_DIR"
+
+# Function to setup audit rules for critical directories
+setup_audit_rules() {
+    echo "Setting up audit rules for critical directories..."
+    
+    for dir in "${CRITICAL_DIRS[@]}"; do
+        if [ -d "$dir" ]; then
+            echo "Adding audit rule for: $dir"
+            sudo auditctl -w "$dir" -p rwxa -k "critical_dir_$(basename "$dir")"
+        else
+            echo "Warning: Directory $dir does not exist"
+        fi
+    done
+    
+    # Add specific file monitoring
+    sudo auditctl -w /etc/passwd -p wa -k passwd_file
+    sudo auditctl -w /etc/shadow -p wa -k shadow_file
+    sudo auditctl -w /etc/sudoers -p wa -k sudoers_file
+    
+    echo "Audit rules configured successfully"
+    sudo auditctl -l
+}
+
+# Function to create baseline for all critical directories
+create_comprehensive_baseline() {
+    echo "Creating comprehensive baseline for critical directories..."
+    BASELINE_FILE="$LOG_DIR/critical_baseline_$(date +%Y%m%d).txt"
+    
+    echo "Critical Directory Baseline - $(date)" > "$BASELINE_FILE"
+    echo "======================================" >> "$BASELINE_FILE"
+    
+    for dir in "${CRITICAL_DIRS[@]}"; do
+        if [ -d "$dir" ]; then
+            echo "" >> "$BASELINE_FILE"
+            echo "Directory: $dir" >> "$BASELINE_FILE"
+            echo "-------------------" >> "$BASELINE_FILE"
+            find "$dir" -type f -exec md5sum {} \; 2>/dev/null >> "$BASELINE_FILE"
+        fi
+    done
+    
+    echo "Baseline created: $BASELINE_FILE"
+}
+
+# Function to monitor and generate alerts
+monitor_critical_changes() {
+    echo "Monitoring critical directories for changes..."
+    echo "Critical Directory Monitor Started - $(date)" > "$MAIN_LOG"
+    
+    # Generate audit report for critical directories
+    for dir in "${CRITICAL_DIRS[@]}"; do
+        if [ -d "$dir" ]; then
+            DIR_KEY="critical_dir_$(basename "$dir")"
+            echo "" >> "$MAIN_LOG"
+            echo "=== Changes in $dir ===" >> "$MAIN_LOG"
+            sudo ausearch -k "$DIR_KEY" -ts today 2>/dev/null >> "$MAIN_LOG"
+        fi
+    done
+    
+    # Check for specific file changes
+    echo "" >> "$MAIN_LOG"
+    echo "=== Critical File Changes ===" >> "$MAIN_LOG"
+    sudo ausearch -k passwd_file -ts today 2>/dev/null >> "$MAIN_LOG"
+    sudo ausearch -k shadow_file -ts today 2>/dev/null >> "$MAIN_LOG"
+    sudo ausearch -k sudoers_file -ts today 2>/dev/null >> "$MAIN_LOG"
+    
+    echo "Monitoring report generated: $MAIN_LOG"
+    
+    # Display summary
+    echo ""
+    echo "=== MONITORING SUMMARY ==="
+    echo "Total audit rules active: $(sudo auditctl -l | wc -l)"
+    echo "Log file location: $MAIN_LOG"
+    echo "Baseline location: $LOG_DIR/"
+}
+
+# Function to generate security report
+generate_security_report() {
+    REPORT_FILE="$LOG_DIR/security_report_$(date +%Y%m%d_%H%M%S).txt"
+    
+    echo "Security Assessment Report - $(date)" > "$REPORT_FILE"
+    echo "========================================" >> "$REPORT_FILE"
+    echo "" >> "$REPORT_FILE"
+    
+    echo "1. AUDIT SYSTEM STATUS" >> "$REPORT_FILE"
+    echo "----------------------" >> "$REPORT_FILE"
+    sudo auditctl -s >> "$REPORT_FILE" 2>/dev/null
+    echo "" >> "$REPORT_FILE"
+    
+    echo "2. ACTIVE MONITORING RULES" >> "$REPORT_FILE"
+    echo "--------------------------" >> "$REPORT_FILE"
+    sudo auditctl -l >> "$REPORT_FILE" 2>/dev/null
+    echo "" >> "$REPORT_FILE"
+    
+    echo "3. RECENT SECURITY EVENTS" >> "$REPORT_FILE"
+    echo "-------------------------" >> "$REPORT_FILE"
+    sudo ausearch -ts today 2>/dev/null | tail -20 >> "$REPORT_FILE"
+    echo "" >> "$REPORT_FILE"
+    
+    echo "4. FILE ACCESS SUMMARY" >> "$REPORT_FILE"
+    echo "----------------------" >> "$REPORT_FILE"
+    sudo aureport -f 2>/dev/null | tail -10 >> "$REPORT_FILE"
+    echo "" >> "$REPORT_FILE"
+    
+    echo "Security report generated: $REPORT_FILE"
+    cat "$REPORT_FILE"
+}
+
+# Main menu
+case "$1" in
+    setup)
+        setup_audit_rules
+        ;;
+    baseline)
+        create_comprehensive_baseline
+        ;;
+    monitor)
+        monitor_critical_changes
+        ;;
+    report)
+        generate_security_report
+        ;;
+    *)
+        echo "Critical Directory Monitoring Tool"
+        echo "Usage: $0 {setup|baseline|monitor|report}"
+        echo ""
+        echo "Commands:"
+        echo "  setup     - Configure audit rules for critical directories"
+        echo "  baseline  - Create integrity baseline for all critical directories"
+        echo "  monitor   - Check for changes and generate monitoring report"
+        echo "  report    - Generate comprehensive security report"
+        exit 1
+        ;;
+esac
+Step 2: Make the script executable
+
+chmod +x critical_dirs_monitor.sh
+Step 3: Setup audit rules for critical directories
+
+./critical_dirs_monitor.sh setup
+Step 4: Create baseline for critical directories
+
+./critical_dirs_monitor.sh baseline
+Subtask 3.2: Testing Critical Directory Monitoring
+Step 1: Generate test activities to trigger monitoring
+
+# Create a new file in monitored directory
+echo "Test configuration" > /home/$USER/secure_files/new_config.txt
+
+# Modify a system-accessible file (if permissions allow)
+touch /home/$USER/test_system_file.txt
+
+# Change file permissions
+chmod 644 /home/$USER/secure_files/new_config.txt
+Step 2: Run monitoring check
+
+./critical_dirs_monitor.sh monitor
+Step 3: Generate comprehensive security report
+
+./critical_dirs_monitor.sh report
+Subtask 3.3: Creating Automated Monitoring Service
+Step 1: Create a service script for continuous monitoring
+
+nano fim_service.sh
+Add the following content:
+
+#!/bin/bash
+
+# File Integrity Monitoring Service
+# Runs continuous monitoring and generates periodic reports
+
+SERVICE_NAME="FIM_Monitor"
+LOG_DIR="/home/$USER/monitoring_logs"
+SERVICE_LOG="$LOG_DIR/fim_service.log"
+PID_FILE="/home/$USER/fim_service.pid"
+
+# Create necessary directories
+mkdir -p "$LOG_DIR"
+
+start_service() {
+    if [ -f "$PID_FILE" ]; then
+        echo "Service already running (PID: $(cat $PID_FILE))"
+        return 1
+    fi
+    
+    echo "Starting $SERVICE_NAME..."
+    echo "Service started at $(date)" > "$SERVICE_LOG"
+    
+    # Start background monitoring
+    (
+        while true; do
+            echo "$(date): Running integrity check..." >> "$SERVICE_LOG"
+            ./file_integrity_checker.sh -s >> "$SERVICE_LOG" 2>&1
+            ./critical_dirs_monitor.sh monitor >> "$SERVICE_LOG" 2>&1
+            sleep 300  # Check every 5 minutes
+        done
+    ) &
+    
+    echo $! > "$PID_FILE"
+    echo "$SERVICE_NAME started with PID $(cat $PID_FILE)"
+    echo "Log file: $SERVICE_LOG"
+}
+
+stop_service() {
+    if [ ! -f "$PID_FILE" ]; then
+        echo "Service is not running"
+        return 1
+    fi
+    
+    PID=$(cat "$PID_FILE")
+    echo "Stopping $SERVICE_NAME (PID: $PID)..."
+    kill "$PID" 2>/dev/null
+    rm -f "$PID_FILE"
+    echo "Service stopped"
+}
+
+status_service() {
+    if [ -f "$PID_FILE" ]; then
+        PID=$(cat "$PID_FILE")
+        if ps -p "$PID" > /dev/null 2>&1; then
+            echo "$SERVICE_NAME is running (PID: $PID)"
+            echo "Log file: $SERVICE_LOG"
+            echo "Recent activity:"
+            tail -5 "$SERVICE_LOG" 2>/dev/null
+        else
+            echo "$SERVICE_NAME is not running (stale PID file)"
+            rm -f "$PID_FILE"
+        fi
+    else
+        echo "$SERVICE_NAME is not running"
+    fi
+}
+
+case "$1" in
+    start)
+        start_service
+        ;;
+    stop)
+        stop_service
+        ;;
+    status)
+        status_service
+        ;;
+    restart)
+        stop_service
+        sleep 2
+        start_service
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
+Step 2: Make the service script executable
+
+chmod +x fim_service.sh
+Step 3: Start the monitoring service
+
+./fim_service.sh start
+Step 4: Check service status
+
+./fim_service.sh status
+Step 5: Let the service run for a few minutes, then check logs
+
+sleep 60
+tail -20 /home/$USER/monitoring_logs/fim_service.log
+Step 6: Stop the service
+
+./fim_service.sh stop
+Verification and Testing
+Final Verification Steps
+Step 1: Verify all audit rules are active
+
+sudo auditctl -l | wc -l
+echo "Total audit rules configured: $(sudo auditctl -l | wc -l)"
+Step 2: Test complete monitoring workflow
+
+# Create test changes
+echo "Final test modification" >> /home/$USER/secure_files/important.txt
+touch /home/$USER/secure_files/final_test.txt
+
+# Run all monitoring tools
+./file_integrity_checker.sh -s
+./critical_dirs_monitor.sh monitor
+./critical_dirs_monitor.sh report
+Step 3: Review all generated reports
+
+ls -la /home/$USER/monitoring_logs/
+ls -la /home/$USER/integrity_report_*.txt
+Troubleshooting Common Issues
+Issue 1: auditd Service Not Starting
+Solution:
+
+sudo systemctl reset-failed auditd
+sudo systemctl start auditd
+sudo systemctl status auditd
+Issue 2: Permission Denied Errors
+Solution:
+
+# Ensure proper permissions for monitoring directories
+chmod 755 /home/$USER/secure_files
+# Run audit commands with sudo
+sudo auditctl -l
+Issue 3: No Audit Events Generated
+Solution:
+
+# Check if audit rules are properly set
+sudo auditctl -l
+# Verify auditd is logging
+sudo tail -f /var/log/audit/audit.log
+Issue 4: Script Execution Errors
+Solution:
+
+# Ensure scripts are executable
+chmod +x *.sh
+# Check for syntax errors
+bash -n script_name.sh
+Conclusion
+In this comprehensive File Integrity Monitoring lab, you have successfully:
+
+Configured auditd to track file changes and unauthorized access on a Linux system
+Created automated scripts for file integrity checking using MD5 checksums and real-time monitoring with inotify
+Implemented monitoring for critical system directories and files
+Developed a complete monitoring service that can run continuously and generate periodic reports
+Learned to analyze audit logs and generate security reports for incident response
+Key Achievements
+Security Enhancement: You've implemented multiple layers of file integrity monitoring that can detect unauthorized changes, deletions, and new file creation
+Automation Skills: Created scripts that automate the monitoring process, reducing manual effort and ensuring consistent security checks
+Incident Response: Developed the ability to generate detailed reports that can be used for security incident investigation
+Proactive Security: Established real-time monitoring capabilities that can alert administrators to security events as they occur
+Real-World Applications
+The skills learned in this lab are directly applicable to:
+
+Enterprise Security: Monitoring critical configuration files and system directories
+Compliance Requirements: Meeting regulatory requirements for file integrity monitoring
+Incident Response: Detecting and investigating security breaches
+System Administration: Maintaining system integrity and detecting unauthorized changes
+Next Steps
+To further enhance your file integrity monitoring capabilities, consider:
+
+Integrating with SIEM systems for centralized logging
+Implementing automated alerting mechanisms
+Exploring advanced tools like AIDE (Advanced Intrusion Detection Environment)
+Setting up network-based file integrity monitoring for distributed systems
+This lab provides a solid foundation for implementing robust file integrity monitoring in production environments using open-source tools and custom automation scripts.
