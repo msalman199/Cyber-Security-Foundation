@@ -1,0 +1,541 @@
+ Final SOC Simulation Lab
+Objectives
+By completing this lab, students will:
+
+Configure and integrate multiple security monitoring tools in a unified SOC environment
+Implement automated threat detection rules and response mechanisms
+Analyze security logs from multiple sources to identify threats
+Create and execute incident response playbooks for common attack scenarios
+Develop automated scripts for threat containment and remediation
+Prerequisites
+Basic Linux command line proficiency
+Understanding of network security fundamentals
+Familiarity with log file analysis
+Basic Python or Bash scripting knowledge
+Knowledge of common cyber attack vectors
+Lab Environment
+Cloud-Based Setup: Al Nafi provides pre-configured Ubuntu 20.04 LTS machines. Click Start Lab to access your environment with:
+
+4GB RAM minimum
+20GB disk space
+Internet connectivity
+Pre-installed: Python 3, rsyslog, iptables
+Task 1: Configure SOC Infrastructure
+Step 1: Install Security Tools
+Install core monitoring and detection tools:
+
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install essential packages
+sudo apt install -y suricata fail2ban rsyslog python3-pip jq
+
+# Verify installations
+suricata --version
+fail2ban-client version
+Step 2: Create SOC Directory Structure
+Establish organized workspace for logs, scripts, and alerts:
+
+# Create directory hierarchy
+sudo mkdir -p /opt/soc/{logs,scripts,playbooks,alerts,reports}
+sudo chown -R $USER:$USER /opt/soc
+
+# Configure centralized logging
+sudo tee /etc/rsyslog.d/50-soc.conf << 'EOF'
+*.* /opt/soc/logs/system.log
+auth.* /opt/soc/logs/auth.log
+EOF
+
+sudo systemctl restart rsyslog
+Step 3: Configure Network Monitoring
+Set up Suricata for network intrusion detection:
+
+# Configure Suricata
+sudo tee /etc/suricata/suricata.yaml << 'EOF'
+vars:
+  address-groups:
+    HOME_NET: "[192.168.0.0/16,10.0.0.0/8,172.16.0.0/12]"
+    EXTERNAL_NET: "!$HOME_NET"
+
+default-log-dir: /opt/soc/logs/
+
+outputs:
+  - eve-log:
+      enabled: yes
+      filename: suricata-eve.json
+      types:
+        - alert
+        - http
+        - dns
+
+af-packet:
+  - interface: eth0
+
+rule-files:
+  - suricata.rules
+EOF
+
+# Update rules and start service
+sudo suricata-update
+sudo systemctl enable suricata
+sudo systemctl start suricata
+Task 2: Implement Threat Detection
+Step 1: Create Custom Detection Rules
+Develop Suricata rules for common threats:
+
+# Create custom rules file
+sudo tee /etc/suricata/rules/custom.rules << 'EOF'
+alert tcp any any -> $HOME_NET 22 (msg:"SSH Brute Force"; flow:established; threshold:type both, track by_src, count 5, seconds 60; sid:1000001;)
+
+alert http any any -> $HOME_NET any (msg:"Web Shell Detected"; content:"cmd="; http_uri; sid:1000002;)
+
+alert tcp any any -> $HOME_NET any (msg:"Port Scan"; flags:S; threshold:type both, track by_src, count 10, seconds 10; sid:1000003;)
+EOF
+
+# Include custom rules
+echo "include: /etc/suricata/rules/custom.rules" | sudo tee -a /etc/suricata/suricata.yaml
+
+# Restart Suricata
+sudo systemctl restart suricata
+Step 2: Build Log Analysis Script
+Create Python script to analyze security logs (students complete implementation):
+
+tee /opt/soc/scripts/log_analyzer.py << 'EOF'
+#!/usr/bin/env python3
+import json
+import re
+from collections import defaultdict
+from datetime import datetime
+
+class SOCAnalyzer:
+    def __init__(self):
+        self.alerts = []
+        
+    def analyze_auth_logs(self, log_file):
+        """
+        Analyze authentication logs for brute force attempts.
+        
+        TODO: Read log file line by line
+        TODO: Extract failed login attempts and source IPs
+        TODO: Count failures per IP
+        TODO: Generate alerts for IPs exceeding threshold (5 attempts)
+        """
+        failed_attempts = defaultdict(int)
+        # TODO: Implement log parsing logic
+        pass
+    
+    def analyze_suricata_logs(self, log_file):
+        """
+        Parse Suricata EVE JSON logs for network alerts.
+        
+        TODO: Read JSON log entries
+        TODO: Filter for event_type == 'alert'
+        TODO: Extract alert details (signature, IPs, severity)
+        TODO: Append to self.alerts list
+        """
+        # TODO: Implement Suricata log analysis
+        pass
+    
+    def generate_report(self):
+        """
+        Create comprehensive analysis report.
+        
+        TODO: Count alerts by severity
+        TODO: Create report dictionary with statistics
+        TODO: Save report to /opt/soc/reports/analysis_report.json
+        TODO: Return report dictionary
+        """
+        # TODO: Implement report generation
+        pass
+
+if __name__ == "__main__":
+    analyzer = SOCAnalyzer()
+    analyzer.analyze_auth_logs('/opt/soc/logs/auth.log')
+    analyzer.analyze_suricata_logs('/opt/soc/logs/suricata-eve.json')
+    report = analyzer.generate_report()
+    print(f"Analysis complete: {report.get('total_alerts', 0)} alerts generated")
+EOF
+
+chmod +x /opt/soc/scripts/log_analyzer.py
+Step 3: Configure Fail2ban
+Set up automated IP blocking for repeated offenders:
+
+# Configure SSH protection
+sudo tee /etc/fail2ban/jail.local << 'EOF'
+[sshd]
+enabled = true
+port = ssh
+logpath = /var/log/auth.log
+maxretry = 3
+bantime = 3600
+findtime = 600
+EOF
+
+sudo systemctl enable fail2ban
+sudo systemctl restart fail2ban
+Task 3: Automate Incident Response
+Step 1: Create IP Blocking Script
+Develop automated response for malicious IPs:
+
+tee /opt/soc/scripts/block_ip.sh << 'EOF'
+#!/bin/bash
+# Automated IP blocking script
+
+IP_ADDRESS=$1
+REASON=$2
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+if [ -z "$IP_ADDRESS" ]; then
+    echo "Usage: $0 <IP_ADDRESS> <REASON>"
+    exit 1
+fi
+
+# TODO: Validate IP address format using regex
+# TODO: Add iptables rule to block IP
+# TODO: Log action to /opt/soc/logs/blocked_ips.log
+# TODO: Send notification using send_alert.py
+
+echo "IP $IP_ADDRESS blocked for: $REASON"
+EOF
+
+chmod +x /opt/soc/scripts/block_ip.sh
+Step 2: Build Alert Notification System
+Create alert management script (students implement):
+
+tee /opt/soc/scripts/send_alert.py << 'EOF'
+#!/usr/bin/env python3
+import sys
+import json
+from datetime import datetime
+
+def send_alert(alert_type, message):
+    """
+    Send alert notification and log to file.
+    
+    Args:
+        alert_type: Type of alert (e.g., 'IP_BLOCKED', 'INTRUSION_DETECTED')
+        message: Alert message description
+    
+    TODO: Create alert dictionary with timestamp, type, message, severity
+    TODO: Determine severity based on alert_type
+    TODO: Save to /opt/soc/alerts/<alert_type>_<timestamp>.json
+    TODO: Append to /opt/soc/alerts/all_alerts.log
+    """
+    # TODO: Implement alert notification logic
+    pass
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python3 send_alert.py <ALERT_TYPE> <MESSAGE>")
+        sys.exit(1)
+    
+    send_alert(sys.argv[1], sys.argv[2])
+EOF
+
+chmod +x /opt/soc/scripts/send_alert.py
+Step 3: Develop Response Automation Engine
+Create engine to automatically respond to threats (students complete):
+
+tee /opt/soc/scripts/response_engine.py << 'EOF'
+#!/usr/bin/env python3
+import json
+import subprocess
+import time
+from pathlib import Path
+
+class ResponseEngine:
+    def __init__(self):
+        self.response_rules = {
+            'brute_force': {'action': 'block_ip', 'auto_execute': True},
+            'web_attack': {'action': 'block_ip', 'auto_execute': True},
+            'port_scan': {'action': 'block_ip', 'auto_execute': True}
+        }
+        self.blocked_ips = set()
+    
+    def process_alert(self, alert):
+        """
+        Process alert and execute appropriate response.
+        
+        TODO: Extract alert_type, severity, source_ip from alert
+        TODO: Check if alert_type has response rule
+        TODO: If auto_execute enabled and severity high, execute response
+        TODO: Log response action
+        """
+        # TODO: Implement alert processing
+        pass
+    
+    def execute_ip_block(self, ip_address, reason):
+        """
+        Execute IP blocking response.
+        
+        TODO: Call /opt/soc/scripts/block_ip.sh with IP and reason
+        TODO: Add IP to self.blocked_ips set
+        TODO: Handle errors and log results
+        """
+        # TODO: Implement IP blocking execution
+        pass
+    
+    def monitor_alerts(self):
+        """
+        Continuously monitor for new alerts.
+        
+        TODO: Check for /opt/soc/reports/analysis_report.json every 30 seconds
+        TODO: Process each alert in report
+        TODO: Archive processed reports
+        TODO: Handle KeyboardInterrupt for graceful shutdown
+        """
+        print("Response Engine started...")
+        # TODO: Implement monitoring loop
+        pass
+
+if __name__ == "__main__":
+    engine = ResponseEngine()
+    engine.monitor_alerts()
+EOF
+
+chmod +x /opt/soc/scripts/response_engine.py
+Task 4: Create Incident Response Playbooks
+Step 1: Develop Brute Force Playbook
+Create structured response procedure:
+
+tee /opt/soc/playbooks/brute_force_response.md << 'EOF'
+# Brute Force Attack Response Playbook
+
+## Classification
+- **Type**: Brute Force Authentication Attack
+- **Severity**: High
+- **MITRE ATT&CK**: T1110
+
+## Detection Indicators
+- 5+ failed login attempts from single IP within 5 minutes
+- Source: /opt/soc/logs/auth.log, Suricata alerts
+
+## Response Steps
+
+### Immediate Actions (0-15 min)
+1. Verify alert authenticity in logs
+2. Identify source IP address
+3. Block IP using: `/opt/soc/scripts/block_ip.sh <IP> "brute_force"`
+4. Check for successful logins from same IP
+
+### Investigation (15-60 min)
+1. Analyze full authentication log history
+2. Identify targeted user accounts
+3. Check for lateral movement indicators
+4. Review network traffic from source IP
+
+### Containment (30-90 min)
+1. Reset passwords for targeted accounts
+2. Enable MFA if not already active
+3. Update firewall rules
+4. Monitor for continued attacks
+
+### Recovery (1-4 hours)
+1. Document incident timeline
+2. Update detection rules if needed
+3. Brief security team
+4. Create incident report
+
+## Automation Commands
+```bash
+# Block attacking IP
+/opt/soc/scripts/block_ip.sh <IP_ADDRESS> "brute_force_attack"
+
+# Check blocked IPs
+sudo iptables -L INPUT -n | grep DROP
+
+# Analyze authentication logs
+grep "Failed password" /opt/soc/logs/auth.log | tail -20
+Escalation Criteria
+Multiple source IPs attacking simultaneously
+Successful authentication detected
+Critical system accounts targeted EOF
+
+### Step 2: Create Web Attack Playbook
+
+```bash
+tee /opt/soc/playbooks/web_attack_response.md << 'EOF'
+# Web Application Attack Response Playbook
+
+## Classification
+- **Type**: Web Application Exploitation
+- **Severity**: Critical
+- **MITRE ATT&CK**: T1190
+
+## Detection Indicators
+- Suspicious parameters: cmd=, eval(), system()
+- SQL injection patterns
+- Directory traversal attempts (../)
+- Web shell upload attempts
+
+## Response Steps
+
+### Immediate Actions (0-10 min)
+1. Verify alert in web server logs
+2. Block source IP immediately
+3. Check for successful exploitation
+4. Isolate affected web server if compromised
+
+### Investigation (10-45 min)
+1. Analyze web server access logs
+2. Search for uploaded malicious files
+3. Check database for unauthorized changes
+4. Review application error logs
+
+### Containment (30-120 min)
+1. Remove any malicious files found
+2. Patch vulnerable application components
+3. Update web application firewall rules
+4. Reset application credentials
+
+### Recovery (2-8 hours)
+1. Restore from clean backup if needed
+2. Implement additional security controls
+3. Update application to latest version
+4. Monitor for reinfection attempts
+
+## Automation Commands
+```bash
+# Block attacking IP
+/opt/soc/scripts/block_ip.sh <IP_ADDRESS> "web_attack"
+
+# Search for web shells
+find /var/www -name "*.php" -exec grep -l "eval\|system\|exec" {} \;
+
+# Analyze web logs
+grep -E "(cmd=|eval\(|system\()" /var/log/apache2/access.log
+EOF
+
+
+### Step 3: Build Playbook Execution Tracker
+
+Create system to track playbook execution (students implement):
+
+```bash
+tee /opt/soc/scripts/playbook_tracker.py << 'EOF'
+#!/usr/bin/env python3
+import json
+from datetime import datetime
+
+class PlaybookTracker:
+    def __init__(self):
+        self.execution_log = "/opt/soc/logs/playbook_executions.log"
+        self.playbooks = {
+            'brute_force': '/opt/soc/playbooks/brute_force_response.md',
+            'web_attack': '/opt/soc/playbooks/web_attack_response.md'
+        }
+    
+    def start_playbook(self, incident_type, incident_id):
+        """
+        Start playbook execution for incident.
+        
+        TODO: Create execution record with start time
+        TODO: Log playbook initiation
+        TODO: Return execution ID
+        """
+        # TODO: Implement playbook start tracking
+        pass
+    
+    def log_step(self, execution_id, step_name, status):
+        """
+        Log completion of playbook step.
+        
+        TODO: Record step completion with timestamp
+        TODO: Update execution log
+        TODO: Calculate time elapsed
+        """
+        # TODO: Implement step logging
+        pass
+    
+    def complete_playbook(self, execution_id, outcome):
+        """
+        Mark playbook execution as complete.
+        
+        TODO: Record completion time
+        TODO: Calculate total duration
+        TODO: Generate execution summary
+        """
+        # TODO: Implement playbook completion
+        pass
+
+if __name__ == "__main__":
+    tracker = PlaybookTracker()
+    # Example usage
+    exec_id = tracker.start_playbook('brute_force', 'INC-2024-001')
+    tracker.log_step(exec_id, 'Block IP', 'completed')
+    tracker.complete_playbook(exec_id, 'resolved')
+EOF
+
+chmod +x /opt/soc/scripts/playbook_tracker.py
+Task 5: Test SOC Operations
+Step 1: Generate Test Traffic
+Simulate attacks to test detection:
+
+# Simulate SSH brute force (from another terminal or machine)
+for i in {1..6}; do
+    ssh invalid_user@localhost
+    sleep 2
+done
+
+# Check if detected
+tail -f /opt/soc/logs/auth.log
+Step 2: Run Analysis and Response
+Execute SOC workflow:
+
+# Run log analysis
+python3 /opt/soc/scripts/log_analyzer.py
+
+# Check generated alerts
+cat /opt/soc/reports/analysis_report.json | jq '.alerts'
+
+# Start response engine (in background)
+python3 /opt/soc/scripts/response_engine.py &
+
+# Monitor response actions
+tail -f /opt/soc/logs/response_actions.log
+Step 3: Verify Automated Response
+Confirm blocking and alerting:
+
+# Check blocked IPs
+sudo iptables -L INPUT -n | grep DROP
+cat /opt/soc/logs/blocked_ips.log
+
+# Review all alerts
+cat /opt/soc/alerts/all_alerts.log
+
+# Check Fail2ban status
+sudo fail2ban-client status sshd
+Expected Outcomes
+After completing this lab, students should have:
+
+Functional SOC environment with integrated monitoring tools
+Custom detection rules identifying common attack patterns
+Automated response scripts blocking malicious IPs
+Structured incident response playbooks
+Complete log analysis and alerting pipeline
+Working knowledge of SOC operations workflow
+Troubleshooting Tips
+Suricata not capturing traffic:
+
+Verify correct network interface in configuration
+Check Suricata is running: sudo systemctl status suricata
+Review logs: sudo tail -f /var/log/suricata/suricata.log
+Scripts not executing:
+
+Verify execute permissions: chmod +x /opt/soc/scripts/*.py
+Check Python path: which python3
+Review script errors: python3 -m py_compile script_name.py
+No alerts generated:
+
+Confirm log files exist and have content
+Verify log paths in scripts match actual locations
+Check file permissions: ls -la /opt/soc/logs/
+IP blocking not working:
+
+Verify iptables rules: sudo iptables -L -n
+Check script has sudo privileges for iptables
+Review blocked_ips.log for errors
+Conclusion
+This lab provided hands-on experience building and operating a complete SOC environment. Students configured multiple security tools, implemented automated threat detection and response, and created structured incident response procedures. These skills form the foundation for real-world security operations roles.
+
+Key takeaways include understanding the importance of log aggregation, the value of automation in incident response, and the necessity of documented playbooks for consistent security operations. Continue practicing by creating additional detection rules and playbooks for other attack scenarios.
