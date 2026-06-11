@@ -1,0 +1,576 @@
+Cryptography with Python
+Objectives
+By the end of this lab, students will be able to:
+
+Implement SHA256 hashing for file integrity verification
+Use AES encryption to secure sensitive data
+Create Python scripts for cryptographic operations
+Apply cryptographic techniques for basic cybersecurity tasks
+Automate encryption and hashing workflows
+Prerequisites
+Basic Python programming (variables, functions, file I/O)
+Linux command line familiarity
+Understanding of basic cybersecurity concepts
+Text editor experience (nano/vim)
+Lab Environment
+Al Nafi provides pre-configured Linux cloud machines. Click Start Lab to access your environment with:
+
+Python 3.x pre-installed
+Cryptography libraries ready to use
+Text editor (nano/vim)
+All dependencies configured
+Task 1: Implement SHA256 File Hashing
+Overview
+SHA256 creates unique fingerprints of files for integrity verification. You'll build a tool to hash files and detect modifications.
+
+Step 1: Create Basic Hash Calculator
+Create lab directory and navigate to it:
+mkdir ~/crypto_lab && cd ~/crypto_lab
+Create a test file:
+echo "Original content for testing" > testfile.txt
+Create hash_calculator.py:
+nano hash_calculator.py
+Add the following starter code:
+#!/usr/bin/env python3
+import hashlib
+import sys
+
+def calculate_sha256(filename):
+    """
+    Calculate SHA256 hash of a file.
+    
+    Args:
+        filename: Path to file to hash
+    
+    Returns:
+        Hexadecimal hash string or None on error
+    """
+    # TODO: Create SHA256 hash object
+    # TODO: Open file in binary mode
+    # TODO: Read file in 4096-byte chunks
+    # TODO: Update hash with each chunk
+    # TODO: Return hexadecimal digest
+    # TODO: Handle FileNotFoundError
+    pass
+
+def main():
+    """Main function to handle command line arguments"""
+    # TODO: Check for correct number of arguments
+    # TODO: Get filename from sys.argv
+    # TODO: Calculate and display hash
+    # TODO: Display hash length
+    pass
+
+if __name__ == "__main__":
+    main()
+Complete the implementation and test:
+python3 hash_calculator.py testfile.txt
+Step 2: Build File Integrity Checker
+Create integrity_checker.py:
+nano integrity_checker.py
+Add starter code:
+#!/usr/bin/env python3
+import hashlib
+import json
+import sys
+from datetime import datetime
+
+class IntegrityChecker:
+    def __init__(self, db_file="integrity.json"):
+        """Initialize checker with database file"""
+        self.db_file = db_file
+        self.database = {}
+        # TODO: Load existing database or create new one
+    
+    def load_database(self):
+        """Load hash database from JSON file"""
+        # TODO: Try to open and load JSON file
+        # TODO: Handle FileNotFoundError for new database
+        pass
+    
+    def save_database(self):
+        """Save hash database to JSON file"""
+        # TODO: Write database dictionary to JSON file
+        # TODO: Use indent=2 for readability
+        pass
+    
+    def calculate_hash(self, filepath):
+        """Calculate SHA256 hash of file"""
+        # TODO: Implement hash calculation (similar to Task 1)
+        pass
+    
+    def add_file(self, filepath):
+        """
+        Add file to integrity database.
+        
+        Args:
+            filepath: Path to file to track
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        # TODO: Check if file exists
+        # TODO: Calculate file hash
+        # TODO: Store hash, timestamp, and size in database
+        # TODO: Save database
+        # TODO: Print confirmation
+        pass
+    
+    def verify_file(self, filepath):
+        """
+        Verify file integrity against stored hash.
+        
+        Args:
+            filepath: Path to file to verify
+        
+        Returns:
+            True if unchanged, False if modified
+        """
+        # TODO: Check if file is in database
+        # TODO: Calculate current hash
+        # TODO: Compare with stored hash
+        # TODO: Print verification result
+        pass
+    
+    def list_files(self):
+        """Display all tracked files"""
+        # TODO: Iterate through database
+        # TODO: Print file information (path, hash, timestamp)
+        pass
+
+def main():
+    """Handle command line interface"""
+    # TODO: Parse command line arguments
+    # TODO: Support: add <file>, verify <file>, list
+    # TODO: Create IntegrityChecker instance
+    # TODO: Call appropriate method based on command
+    pass
+
+if __name__ == "__main__":
+    main()
+Test the integrity checker:
+# Add file to database
+python3 integrity_checker.py add testfile.txt
+
+# Verify integrity
+python3 integrity_checker.py verify testfile.txt
+
+# Modify file and verify again
+echo "Modified" >> testfile.txt
+python3 integrity_checker.py verify testfile.txt
+Task 2: Implement AES Encryption
+Overview
+AES (Advanced Encryption Standard) provides symmetric encryption for securing data. You'll implement text and file encryption.
+
+Step 1: Install Cryptography Library
+pip3 install cryptography
+Step 2: Create Basic Text Encryptor
+Create text_encryptor.py:
+nano text_encryptor.py
+Add starter code:
+#!/usr/bin/env python3
+from cryptography.fernet import Fernet
+import sys
+
+class TextEncryptor:
+    def __init__(self):
+        """Initialize encryptor"""
+        self.key = None
+    
+    def generate_key(self):
+        """Generate new encryption key"""
+        # TODO: Use Fernet.generate_key()
+        # TODO: Store in self.key
+        pass
+    
+    def save_key(self, filename="secret.key"):
+        """Save key to file"""
+        # TODO: Write key bytes to file
+        # TODO: Print confirmation
+        pass
+    
+    def load_key(self, filename="secret.key"):
+        """Load key from file"""
+        # TODO: Read key from file
+        # TODO: Store in self.key
+        # TODO: Handle FileNotFoundError
+        pass
+    
+    def encrypt_text(self, plaintext):
+        """
+        Encrypt text string.
+        
+        Args:
+            plaintext: String to encrypt
+        
+        Returns:
+            Encrypted bytes or None
+        """
+        # TODO: Check if key is loaded
+        # TODO: Create Fernet object with key
+        # TODO: Encrypt plaintext (encode to bytes first)
+        # TODO: Return encrypted bytes
+        pass
+    
+    def decrypt_text(self, encrypted_text):
+        """
+        Decrypt encrypted bytes.
+        
+        Args:
+            encrypted_text: Encrypted bytes
+        
+        Returns:
+            Decrypted string or None
+        """
+        # TODO: Check if key is loaded
+        # TODO: Create Fernet object with key
+        # TODO: Decrypt and decode to string
+        # TODO: Handle decryption errors
+        pass
+
+def main():
+    """Interactive encryption demo"""
+    # TODO: Create TextEncryptor instance
+    # TODO: Generate and save key
+    # TODO: Get user input for plaintext
+    # TODO: Encrypt the text
+    # TODO: Display encrypted result
+    # TODO: Decrypt and verify
+    pass
+
+if __name__ == "__main__":
+    main()
+Test the encryptor:
+python3 text_encryptor.py
+Step 3: Create File Encryptor with Password
+Create file_encryptor.py:
+nano file_encryptor.py
+Add starter code:
+#!/usr/bin/env python3
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes, padding
+from cryptography.hazmat.backends import default_backend
+import os
+import sys
+import getpass
+
+class FileEncryptor:
+    def __init__(self):
+        """Initialize file encryptor"""
+        self.backend = default_backend()
+    
+    def derive_key(self, password, salt):
+        """
+        Derive encryption key from password using PBKDF2.
+        
+        Args:
+            password: User password string
+            salt: Random salt bytes
+        
+        Returns:
+            32-byte encryption key
+        """
+        # TODO: Create PBKDF2HMAC object with SHA256
+        # TODO: Set length=32, iterations=100000
+        # TODO: Derive and return key from password
+        pass
+    
+    def encrypt_file(self, input_file, output_file, password):
+        """
+        Encrypt file with password.
+        
+        Args:
+            input_file: Path to file to encrypt
+            output_file: Path for encrypted output
+            password: Encryption password
+        
+        Returns:
+            True if successful
+        """
+        # TODO: Read input file data
+        # TODO: Generate random 16-byte salt and IV
+        # TODO: Derive key from password and salt
+        # TODO: Pad data using PKCS7 (128-bit blocks)
+        # TODO: Create AES cipher in CBC mode
+        # TODO: Encrypt padded data
+        # TODO: Write salt + IV + ciphertext to output file
+        pass
+    
+    def decrypt_file(self, input_file, output_file, password):
+        """
+        Decrypt file with password.
+        
+        Args:
+            input_file: Path to encrypted file
+            output_file: Path for decrypted output
+            password: Decryption password
+        
+        Returns:
+            True if successful
+        """
+        # TODO: Read encrypted file
+        # TODO: Extract salt (first 16 bytes)
+        # TODO: Extract IV (next 16 bytes)
+        # TODO: Extract ciphertext (remaining bytes)
+        # TODO: Derive key from password and salt
+        # TODO: Create AES cipher and decrypt
+        # TODO: Remove PKCS7 padding
+        # TODO: Write decrypted data to output file
+        # TODO: Handle decryption errors (wrong password)
+        pass
+
+def main():
+    """Command line interface for file encryption"""
+    # TODO: Parse arguments: encrypt/decrypt, input, output
+    # TODO: Create FileEncryptor instance
+    # TODO: Get password using getpass.getpass()
+    # TODO: Call encrypt_file or decrypt_file
+    pass
+
+if __name__ == "__main__":
+    main()
+Test file encryption:
+# Create test file
+echo "Confidential data" > secret.txt
+
+# Encrypt
+python3 file_encryptor.py encrypt secret.txt secret.enc
+
+# Decrypt
+python3 file_encryptor.py decrypt secret.enc recovered.txt
+
+# Verify
+cat recovered.txt
+Task 3: Build Automated Security Tools
+Overview
+Combine hashing and encryption into practical security automation tools.
+
+Step 1: Create Secure Vault Manager
+Create vault_manager.py:
+nano vault_manager.py
+Add comprehensive starter code:
+#!/usr/bin/env python3
+import os
+import sys
+import json
+import hashlib
+import getpass
+from datetime import datetime
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes, padding
+from cryptography.hazmat.backends import default_backend
+
+class VaultManager:
+    def __init__(self, vault_dir="secure_vault"):
+        """Initialize vault manager"""
+        self.vault_dir = vault_dir
+        self.metadata_file = os.path.join(vault_dir, "vault_metadata.json")
+        self.backend = default_backend()
+        # TODO: Create vault directory if needed
+        # TODO: Load metadata
+    
+    def calculate_hash(self, filepath):
+        """Calculate SHA256 hash of file"""
+        # TODO: Implement hash calculation
+        pass
+    
+    def derive_key(self, password, salt):
+        """Derive encryption key from password"""
+        # TODO: Use PBKDF2HMAC with SHA256
+        pass
+    
+    def store_file(self, input_file, password):
+        """
+        Encrypt file and store in vault.
+        
+        Args:
+            input_file: Path to file to secure
+            password: Encryption password
+        
+        Returns:
+            True if successful
+        """
+        # TODO: Calculate original file hash
+        # TODO: Read file data
+        # TODO: Generate salt and IV
+        # TODO: Derive key and encrypt data
+        # TODO: Save encrypted file to vault
+        # TODO: Store metadata (filename, hash, timestamp, size)
+        # TODO: Print confirmation
+        pass
+    
+    def retrieve_file(self, filename, output_path, password):
+        """
+        Decrypt file from vault.
+        
+        Args:
+            filename: Name of file in vault
+            output_path: Where to save decrypted file
+            password: Decryption password
+        
+        Returns:
+            True if successful and integrity verified
+        """
+        # TODO: Check if file exists in metadata
+        # TODO: Read encrypted file from vault
+        # TODO: Extract salt, IV, ciphertext
+        # TODO: Derive key and decrypt
+        # TODO: Write decrypted file
+        # TODO: Calculate hash and verify integrity
+        # TODO: Compare with stored hash
+        pass
+    
+    def list_vault(self):
+        """Display all files in vault"""
+        # TODO: Load metadata
+        # TODO: Print formatted list of files
+        # TODO: Show filename, size, date, hash preview
+        pass
+    
+    def remove_file(self, filename):
+        """Remove file from vault"""
+        # TODO: Check if file exists
+        # TODO: Delete encrypted file
+        # TODO: Remove from metadata
+        # TODO: Save updated metadata
+        pass
+
+def main():
+    """Command line interface"""
+    # TODO: Parse commands: store, retrieve, list, remove
+    # TODO: Create VaultManager instance
+    # TODO: Handle each command appropriately
+    # TODO: Use getpass for password input
+    pass
+
+if __name__ == "__main__":
+    main()
+Test the vault manager:
+# Store files
+echo "Report 1" > report1.txt
+python3 vault_manager.py store report1.txt
+
+# List vault contents
+python3 vault_manager.py list
+
+# Retrieve file
+python3 vault_manager.py retrieve report1.txt recovered_report.txt
+Step 2: Create Security Audit Script
+Create security_audit.py:
+nano security_audit.py
+Add starter code:
+#!/usr/bin/env python3
+import os
+import hashlib
+import json
+from datetime import datetime
+
+class SecurityAuditor:
+    def __init__(self, scan_dir="."):
+        """Initialize security auditor"""
+        self.scan_dir = scan_dir
+        self.report = {
+            'timestamp': datetime.now().isoformat(),
+            'directory': os.path.abspath(scan_dir),
+            'files_scanned': 0,
+            'file_hashes': {},
+            'warnings': []
+        }
+    
+    def calculate_hash(self, filepath):
+        """Calculate file hash"""
+        # TODO: Implement SHA256 hashing
+        pass
+    
+    def scan_directory(self):
+        """
+        Scan directory and hash all files.
+        
+        Returns:
+            Dictionary with scan results
+        """
+        # TODO: Walk through directory tree
+        # TODO: For each file, calculate hash
+        # TODO: Store file info (path, size, hash, permissions)
+        # TODO: Check for suspicious patterns
+        # TODO: Update files_scanned counter
+        pass
+    
+    def check_duplicates(self):
+        """Find duplicate files by hash"""
+        # TODO: Group files by hash value
+        # TODO: Identify duplicates
+        # TODO: Add to warnings
+        pass
+    
+    def check_permissions(self):
+        """Check for overly permissive files"""
+        # TODO: Check file permissions
+        # TODO: Warn about world-writable files
+        # TODO: Add warnings to report
+        pass
+    
+    def generate_report(self, output_file):
+        """Save audit report to JSON file"""
+        # TODO: Write report dictionary to JSON
+        # TODO: Print summary to console
+        pass
+
+def main():
+    """Run security audit"""
+    # TODO: Parse command line arguments
+    # TODO: Create SecurityAuditor instance
+    # TODO: Run scan_directory()
+    # TODO: Run check_duplicates()
+    # TODO: Run check_permissions()
+    # TODO: Generate and save report
+    pass
+
+if __name__ == "__main__":
+    main()
+Run security audit:
+python3 security_audit.py ~/crypto_lab
+Expected Outcomes
+After completing this lab, you should have:
+
+Working hash calculator that generates SHA256 checksums
+File integrity checker that detects modifications
+Text and file encryption tools using AES
+Secure vault manager combining encryption and hashing
+Security audit script for directory scanning
+Understanding of practical cryptography applications
+Troubleshooting Tips
+Import errors for cryptography module:
+
+Run: pip3 install --user cryptography
+Verify installation: python3 -c "import cryptography; print('OK')"
+Permission denied errors:
+
+Ensure files are readable: chmod 644 filename
+Check directory permissions: ls -la
+Decryption fails with correct password:
+
+Verify encrypted file wasn't corrupted
+Check that salt and IV are correctly extracted (first 32 bytes)
+Ensure same encryption parameters used for both operations
+JSON decode errors in database files:
+
+Delete corrupted database: rm integrity.json
+Restart with fresh database
+Hash mismatches after decryption:
+
+File may have been modified during encryption
+Check disk space and file system integrity
+Verify complete file was written
+Conclusion
+This lab introduced practical cryptography using Python. You implemented SHA256 hashing for integrity verification, AES encryption for data confidentiality, and combined these techniques into automated security tools. These skills form the foundation for secure application development and cybersecurity operations.
+
+Key takeaways:
+
+Hashing provides integrity verification but not confidentiality
+AES encryption requires proper key management and secure passwords
+Combining cryptographic primitives creates robust security solutions
+Automation reduces human error in security operations
+Continue practicing by encrypting different file types, implementing additional hash algorithms (SHA512, MD5 for comparison), and exploring asymmetric encryption with RSA.
