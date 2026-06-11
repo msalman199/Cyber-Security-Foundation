@@ -1,0 +1,495 @@
+Security Automation & Patch Management
+Objectives
+By the end of this lab, students will be able to:
+
+Create Bash scripts for automated Linux system updates
+Develop Python scripts for security monitoring and automation
+Write PowerShell scripts for patch management simulation
+Schedule automated security checks using cron jobs
+Implement basic patch management workflows
+Prerequisites
+Basic Linux command line knowledge
+Familiarity with text editors (nano or vim)
+Understanding of package management concepts
+Basic scripting experience
+Lab Environment
+Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines for this lab. Click Start Lab to access your pre-configured environment.
+
+Your cloud machine includes:
+
+Ubuntu 22.04 LTS
+Python 3.10+
+PowerShell Core
+All necessary tools pre-installed
+Task 1: Bash Scripts for System Updates
+Step 1: Create Basic Update Script
+Create a directory for your scripts:
+
+mkdir -p ~/security-automation
+cd ~/security-automation
+nano system-update.sh
+Add the following starter template:
+
+#!/bin/bash
+
+# System Update Automation Script
+# TODO: Complete the script functions
+
+LOG_FILE="/var/log/system-update.log"
+DATE=$(date '+%Y-%m-%d %H:%M:%S')
+
+# Function to log messages
+log_message() {
+    # TODO: Implement logging to file and console
+    # Hint: Use echo and tee commands
+    echo "[$DATE] $1"
+}
+
+# Function to update package lists
+update_package_lists() {
+    log_message "Starting package list update..."
+    # TODO: Run apt update command
+    # TODO: Check return status and log result
+}
+
+# Function to upgrade packages
+upgrade_packages() {
+    log_message "Starting package upgrade..."
+    # TODO: Run apt upgrade with -y flag
+    # TODO: Log success or failure
+}
+
+# Function to clean up system
+cleanup_system() {
+    # TODO: Run apt autoremove
+    # TODO: Run apt autoclean
+    log_message "System cleanup completed"
+}
+
+# Function to check reboot requirement
+check_reboot_required() {
+    # TODO: Check if /var/run/reboot-required exists
+    # TODO: Log appropriate message
+}
+
+# Main execution
+main() {
+    log_message "=== Starting automated system update ==="
+    # TODO: Call functions in proper order
+    # TODO: Handle errors appropriately
+    log_message "=== Update completed ==="
+}
+
+main
+Make executable and test:
+
+chmod +x system-update.sh
+./system-update.sh
+Step 2: Create Security-Focused Update Script
+Create a security update script:
+
+nano security-update.sh
+Add this template:
+
+#!/bin/bash
+
+# Security Update Script
+# TODO: Complete security-specific functions
+
+LOG_FILE="/var/log/security-update.log"
+
+log_message() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | sudo tee -a $LOG_FILE
+}
+
+# Check for security updates
+check_security_updates() {
+    log_message "Checking for security updates..."
+    # TODO: Update package lists
+    # TODO: Filter for security updates using grep
+    # TODO: Count and display security updates
+}
+
+# Install security updates only
+install_security_updates() {
+    # TODO: Install unattended-upgrades if needed
+    # TODO: Run unattended-upgrades command
+    # TODO: Log results
+}
+
+# Main execution
+main() {
+    log_message "=== Security update process started ==="
+    # TODO: Implement security update workflow
+    log_message "=== Security update process completed ==="
+}
+
+main
+Make executable:
+
+chmod +x security-update.sh
+Task 2: Python Security Monitoring Script
+Step 1: Create System Monitor
+Create a Python monitoring script:
+
+nano system_monitor.py
+Add this starter code:
+
+#!/usr/bin/env python3
+
+"""
+System Security Monitor
+TODO: Complete the monitoring functions
+"""
+
+import os
+import subprocess
+import datetime
+import json
+import logging
+
+# Configure logging
+logging.basicConfig(
+    filename='/var/log/system-monitor.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+class SystemSecurityMonitor:
+    def __init__(self):
+        self.report = {
+            'timestamp': datetime.datetime.now().isoformat(),
+            'hostname': os.uname().nodename,
+            'checks': {}
+        }
+    
+    def check_failed_logins(self):
+        """
+        Check for failed login attempts in auth.log
+        TODO: Implement failed login detection
+        TODO: Count failed attempts
+        TODO: Add results to self.report['checks']
+        """
+        pass
+    
+    def check_disk_usage(self):
+        """
+        Monitor disk usage
+        TODO: Get disk usage statistics
+        TODO: Calculate usage percentage
+        TODO: Set status based on thresholds (>90% critical, >80% warning)
+        """
+        pass
+    
+    def check_system_updates(self):
+        """
+        Check for available updates
+        TODO: Run apt update
+        TODO: Count upgradable packages
+        TODO: Identify security updates
+        """
+        pass
+    
+    def generate_report(self):
+        """
+        Generate security report
+        TODO: Save report to JSON file
+        TODO: Print summary to console
+        TODO: Log report generation
+        """
+        report_file = f"/tmp/security_report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        # TODO: Implement report generation
+        print(f"Report saved to: {report_file}")
+    
+    def run_all_checks(self):
+        """Run all security checks"""
+        print("Running system security checks...")
+        # TODO: Call all check methods
+        # TODO: Generate final report
+
+def main():
+    """Main function"""
+    # TODO: Create monitor instance
+    # TODO: Run all checks
+    # TODO: Handle exceptions
+
+if __name__ == "__main__":
+    main()
+Install required packages:
+
+pip3 install psutil
+Make executable:
+
+chmod +x system_monitor.py
+Step 2: Create Patch Management Script
+Create patch manager:
+
+nano patch_manager.py
+Add starter template:
+
+#!/usr/bin/env python3
+
+"""
+Automated Patch Management System
+TODO: Complete patch management functions
+"""
+
+import os
+import subprocess
+import datetime
+import json
+import logging
+
+logging.basicConfig(
+    filename='/var/log/patch-manager.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+class PatchManager:
+    def __init__(self):
+        self.backup_dir = "/var/backups/patch-manager"
+        # TODO: Create necessary directories
+    
+    def create_system_snapshot(self):
+        """
+        Create system snapshot before patching
+        TODO: Backup package list using dpkg --get-selections
+        TODO: Backup important config files
+        TODO: Return snapshot directory path
+        """
+        pass
+    
+    def check_available_updates(self):
+        """
+        Check for available updates
+        TODO: Run apt update
+        TODO: Get list of upgradable packages
+        TODO: Return list of packages with security flag
+        """
+        pass
+    
+    def categorize_updates(self, packages):
+        """
+        Categorize updates by priority
+        TODO: Separate security from regular updates
+        TODO: Return dictionary with categories
+        """
+        pass
+    
+    def install_security_updates(self):
+        """
+        Install security updates only
+        TODO: Use unattended-upgrades
+        TODO: Log installation results
+        TODO: Return success status
+        """
+        pass
+    
+    def generate_patch_report(self, updates_info, snapshot_path, success):
+        """
+        Generate patch report
+        TODO: Create report dictionary
+        TODO: Save to JSON file
+        TODO: Print summary
+        """
+        pass
+    
+    def run_patch_cycle(self, security_only=False):
+        """
+        Run complete patch cycle
+        TODO: Create snapshot
+        TODO: Check updates
+        TODO: Install updates
+        TODO: Generate report
+        """
+        pass
+
+def main():
+    """Main function"""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Automated Patch Management')
+    parser.add_argument('--security-only', action='store_true')
+    args = parser.parse_args()
+    
+    # TODO: Create PatchManager instance
+    # TODO: Run patch cycle
+    # TODO: Handle errors
+
+if __name__ == "__main__":
+    main()
+Make executable:
+
+chmod +x patch_manager.py
+Task 3: PowerShell Patch Management Simulation
+Step 1: Install PowerShell Core
+Install PowerShell on Linux:
+
+sudo apt update
+sudo apt install -y powershell
+pwsh --version
+Step 2: Create Windows Patch Simulation Script
+Create PowerShell script:
+
+nano windows-patch-sim.ps1
+Add starter template:
+
+#!/usr/bin/env pwsh
+
+<#
+.SYNOPSIS
+    Windows Patch Management Simulation
+.DESCRIPTION
+    Simulates Windows patching on Linux
+#>
+
+$ErrorActionPreference = "Continue"
+$LogFile = "/var/log/windows-patch-sim.log"
+
+function Write-LogMessage {
+    param(
+        [string]$Message,
+        [string]$Level = "INFO"
+    )
+    
+    # TODO: Format timestamp
+    # TODO: Write to log file and console
+}
+
+function Test-WindowsUpdates {
+    <#
+    .SYNOPSIS
+        Simulate Windows Update check
+    .DESCRIPTION
+        TODO: Create mock update data
+        TODO: Return array of update objects
+    #>
+    
+    Write-LogMessage "Simulating Windows Update check..."
+    
+    # TODO: Create mock updates with properties:
+    # - Title
+    # - IsSecurityUpdate
+    # - Size
+    # - Severity
+    
+    # TODO: Return mock updates array
+}
+
+function Install-WindowsUpdates {
+    param(
+        [array]$Updates,
+        [switch]$SecurityOnly
+    )
+    
+    <#
+    .SYNOPSIS
+        Simulate update installation
+    .DESCRIPTION
+        TODO: Filter updates if SecurityOnly
+        TODO: Simulate installation progress
+        TODO: Return count of installed updates
+    #>
+}
+
+function Test-RestartRequired {
+    <#
+    .SYNOPSIS
+        Check if restart is required
+    .DESCRIPTION
+        TODO: Simulate restart requirement check
+        TODO: Return boolean
+    #>
+}
+
+function Start-PatchManagement {
+    param(
+        [switch]$SecurityOnly
+    )
+    
+    # TODO: Check for updates
+    # TODO: Install updates
+    # TODO: Check restart requirement
+    # TODO: Generate report
+}
+
+# Main execution
+# TODO: Parse command line arguments
+# TODO: Call Start-PatchManagement
+# TODO: Handle errors
+Make executable:
+
+chmod +x windows-patch-sim.ps1
+Test the script:
+
+pwsh ./windows-patch-sim.ps1
+Task 4: Schedule Automated Security Checks
+Step 1: Create Cron Jobs
+Edit crontab:
+
+crontab -e
+Add these scheduled tasks (modify paths as needed):
+
+# Run system updates daily at 2 AM
+0 2 * * * /home/student/security-automation/system-update.sh
+
+# Run security updates daily at 3 AM
+0 3 * * * /home/student/security-automation/security-update.sh
+
+# Run security monitor every 6 hours
+0 */6 * * * /usr/bin/python3 /home/student/security-automation/system_monitor.py
+
+# Run patch manager weekly on Sundays at 4 AM
+0 4 * * 0 /usr/bin/python3 /home/student/security-automation/patch_manager.py --security-only
+Step 2: Verify Cron Jobs
+List scheduled jobs:
+
+crontab -l
+Check cron logs:
+
+sudo grep CRON /var/log/syslog | tail -20
+Step 3: Test Manual Execution
+Run scripts manually to verify:
+
+sudo ./system-update.sh
+sudo python3 system_monitor.py
+sudo python3 patch_manager.py --security-only
+pwsh ./windows-patch-sim.ps1
+Expected Outcomes
+After completing this lab, you should have:
+
+Working Bash scripts for system updates with logging
+Python scripts for security monitoring and patch management
+PowerShell script simulating Windows patch operations
+Scheduled cron jobs for automated security tasks
+Log files documenting all automation activities
+JSON reports from monitoring and patching operations
+Troubleshooting Tips
+Permission Errors:
+
+Use sudo for system-level operations
+Ensure scripts have execute permissions (chmod +x)
+Check log file directory permissions
+Cron Jobs Not Running:
+
+Verify cron service is active: sudo systemctl status cron
+Use absolute paths in crontab entries
+Check /var/log/syslog for cron errors
+Ensure scripts are executable
+Python Import Errors:
+
+Install missing packages: pip3 install psutil
+Verify Python version: python3 --version
+Check virtual environment if used
+Conclusion
+This lab introduced security automation and patch management concepts through practical scripting exercises. You created Bash scripts for system updates, Python scripts for security monitoring, and PowerShell scripts for patch management simulation. You also learned to schedule automated tasks using cron jobs.
+
+Key takeaways:
+
+Automation reduces manual effort and human error
+Regular patching is critical for security
+Logging and reporting enable audit trails
+Scheduled tasks ensure consistent security maintenance
+Multiple scripting languages serve different purposes
+Continue practicing by enhancing these scripts with additional features like email notifications, rollback capabilities, and more comprehensive security checks.
