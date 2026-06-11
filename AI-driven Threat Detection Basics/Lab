@@ -1,0 +1,508 @@
+AI-driven Threat Detection Basics
+Objectives
+By the end of this lab, students will be able to:
+
+• Implement basic anomaly detection algorithms for security log analysis • Create automated alert mechanisms for suspicious activities • Build machine learning models for threat classification • Apply statistical methods to identify unusual patterns in system logs • Configure real-time monitoring systems for cybersecurity applications
+
+Prerequisites
+Before starting this lab, students should have:
+
+• Basic Python programming skills (functions, loops, file I/O) • Familiarity with Linux command line operations • Understanding of basic statistics (mean, standard deviation) • Basic knowledge of log file formats
+
+Lab Environment
+This lab uses a single Linux machine with:
+
+• Ubuntu 20.04 LTS or newer • Python 3.8+ with pip • Pre-installed text editors (nano, vim) • Network connectivity for package installation
+
+Note: Click "Start Lab" to access your pre-configured cloud machine.
+
+Task 1: Environment Setup and Data Generation
+Step 1.1: Install Required Packages
+# Update package manager
+sudo apt update
+
+# Install Python packages
+pip3 install pandas numpy scikit-learn matplotlib
+Step 1.2: Create Project Structure
+# Create directories
+mkdir -p ~/threat_detection_lab/{logs,scripts,models,alerts}
+cd ~/threat_detection_lab
+Step 1.3: Generate Sample Log Data
+Create generate_logs.py:
+
+#!/usr/bin/env python3
+import random
+import datetime
+
+def generate_sample_logs():
+    """
+    Generate sample log entries with normal and suspicious activities.
+    
+    TODO: Implement log generation with the following:
+    - Create 1000 normal log entries (INFO level)
+    - Create 50 suspicious entries (WARNING level)
+    - Format: timestamp | level | ip | user | activity
+    - Write to logs/system.log
+    """
+    
+    normal_activities = [
+        "User login successful",
+        "File access granted",
+        "Database query executed",
+        # TODO: Add more normal activities
+    ]
+    
+    suspicious_activities = [
+        "Multiple failed login attempts",
+        "SQL injection attempt detected",
+        "Unauthorized file access attempt",
+        # TODO: Add more suspicious activities
+    ]
+    
+    # TODO: Generate timestamps using datetime
+    # TODO: Create random IP addresses (192.168.1.x for normal, 10.0.0.x for suspicious)
+    # TODO: Create random usernames
+    # TODO: Shuffle entries and write to file
+    
+    pass
+
+if __name__ == "__main__":
+    generate_sample_logs()
+Run the script:
+
+chmod +x generate_logs.py
+python3 generate_logs.py
+Task 2: Statistical Anomaly Detection
+Step 2.1: Create Log Parser and Analyzer
+Create scripts/log_analyzer.py:
+
+#!/usr/bin/env python3
+import pandas as pd
+import numpy as np
+from collections import Counter
+
+class LogAnalyzer:
+    def __init__(self, log_file_path):
+        self.log_file_path = log_file_path
+        self.parsed_logs = None
+        
+    def parse_logs(self):
+        """
+        Parse log file into structured DataFrame.
+        
+        TODO: Implement the following:
+        - Read log file line by line
+        - Split each line by ' | ' delimiter
+        - Extract: timestamp, level, ip_address, user, activity
+        - Convert to pandas DataFrame
+        - Parse timestamp as datetime
+        """
+        pass
+    
+    def detect_failed_login_anomalies(self, threshold=5):
+        """
+        Detect users with excessive failed login attempts.
+        
+        Args:
+            threshold: Maximum allowed failed attempts
+            
+        TODO: Implement detection logic:
+        - Filter logs containing 'failed login'
+        - Count attempts per user
+        - Identify users exceeding threshold
+        - Return suspicious users
+        """
+        pass
+    
+    def detect_ip_anomalies(self):
+        """
+        Detect IPs with unusual activity levels using statistical methods.
+        
+        TODO: Implement the following:
+        - Count requests per IP address
+        - Calculate mean and standard deviation
+        - Set threshold at mean + 2*std
+        - Identify IPs exceeding threshold
+        """
+        pass
+    
+    def detect_time_based_anomalies(self):
+        """
+        Detect activities outside normal business hours (9 AM - 5 PM).
+        
+        TODO: Implement detection:
+        - Extract hour from timestamp
+        - Filter activities outside 9-17 hours
+        - Count after-hours activities per user
+        - Return suspicious after-hours users
+        """
+        pass
+    
+    def detect_keyword_anomalies(self):
+        """
+        Detect activities containing suspicious keywords.
+        
+        TODO: Define suspicious keywords list:
+        - injection, malware, unauthorized, escalation, scanning
+        - Search for keywords in activity field (case-insensitive)
+        - Return matching log entries
+        """
+        pass
+    
+    def generate_summary_report(self):
+        """
+        Generate comprehensive analysis summary.
+        
+        TODO: Calculate and display:
+        - Total log entries
+        - Warning-level entries count
+        - Unique users and IPs
+        - Analysis time period
+        """
+        pass
+
+def main():
+    # TODO: Initialize analyzer with log file path
+    # TODO: Parse logs
+    # TODO: Run all detection methods
+    # TODO: Generate summary report
+    pass
+
+if __name__ == "__main__":
+    main()
+Step 2.2: Run Analysis
+cd ~/threat_detection_lab/scripts
+chmod +x log_analyzer.py
+python3 log_analyzer.py
+Expected Output: Detection results for failed logins, suspicious IPs, after-hours activity, and keyword matches.
+
+Task 3: Real-time Monitoring and Alerts
+Step 3.1: Create Alert Configuration
+Create scripts/alert_config.json:
+
+{
+    "console_alerts": true,
+    "alert_threshold": 2,
+    "monitoring_interval": 3,
+    "alert_log_file": "../alerts/threat_alerts.log",
+    "threat_patterns": [
+        "failed login",
+        "unauthorized",
+        "injection",
+        "malware",
+        "scanning"
+    ],
+    "severity_levels": {
+        "injection": "HIGH",
+        "malware": "HIGH",
+        "unauthorized": "MEDIUM",
+        "failed login": "LOW"
+    }
+}
+Step 3.2: Develop Real-time Monitor
+Create scripts/real_time_monitor.py:
+
+#!/usr/bin/env python3
+import time
+import json
+from datetime import datetime
+
+class ThreatMonitor:
+    def __init__(self, log_file_path, config_file):
+        self.log_file_path = log_file_path
+        self.config = self.load_config(config_file)
+        self.last_position = 0
+        
+    def load_config(self, config_file):
+        """
+        Load alert configuration from JSON file.
+        
+        TODO: Implement config loading with error handling
+        """
+        pass
+    
+    def check_new_entries(self):
+        """
+        Check for new log entries since last check.
+        
+        TODO: Implement the following:
+        - Open log file and seek to last_position
+        - Read new lines
+        - Update last_position
+        - Return new lines
+        """
+        pass
+    
+    def analyze_entry(self, log_entry):
+        """
+        Analyze single log entry for threat patterns.
+        
+        Args:
+            log_entry: Single log line string
+            
+        TODO: Implement pattern matching:
+        - Check entry against threat_patterns from config
+        - Determine severity level
+        - Return threat info dict if match found
+        """
+        pass
+    
+    def send_alert(self, threat_info):
+        """
+        Send alert based on configuration.
+        
+        TODO: Implement alert mechanisms:
+        - Print to console if enabled
+        - Write to alert log file
+        - Format alert with timestamp, severity, pattern, entry
+        """
+        pass
+    
+    def start_monitoring(self):
+        """
+        Start continuous monitoring loop.
+        
+        TODO: Implement monitoring:
+        - Loop indefinitely
+        - Check for new entries at configured interval
+        - Analyze each new entry
+        - Send alerts for detected threats
+        - Handle KeyboardInterrupt for graceful exit
+        """
+        pass
+
+def main():
+    # TODO: Initialize monitor with log file and config
+    # TODO: Start monitoring
+    pass
+
+if __name__ == "__main__":
+    main()
+Step 3.3: Test Alert System
+Terminal 1 - Start monitor:
+
+cd ~/threat_detection_lab/scripts
+python3 real_time_monitor.py
+Terminal 2 - Simulate threats:
+
+cd ~/threat_detection_lab
+echo "$(date '+%Y-%m-%d %H:%M:%S') | WARNING | 192.168.1.100 | testuser | SQL injection attempt detected" >> logs/system.log
+echo "$(date '+%Y-%m-%d %H:%M:%S') | WARNING | 10.0.0.50 | admin | Malware signature detected" >> logs/system.log
+Stop monitor with Ctrl+C and check alerts:
+
+cat alerts/threat_alerts.log
+Task 4: Machine Learning Threat Detection
+Step 4.1: Create ML Feature Extractor
+Create scripts/ml_threat_detector.py:
+
+#!/usr/bin/env python3
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import IsolationForest, RandomForestClassifier
+from sklearn.metrics import classification_report
+import pickle
+
+class MLThreatDetector:
+    def __init__(self, log_file_path):
+        self.log_file_path = log_file_path
+        
+    def load_and_preprocess_data(self):
+        """
+        Load log data and prepare for ML.
+        
+        TODO: Implement data loading:
+        - Parse log file (reuse parsing logic)
+        - Convert to DataFrame
+        - Call extract_features()
+        """
+        pass
+    
+    def extract_features(self, df):
+        """
+        Extract numerical features from log data.
+        
+        TODO: Create the following features:
+        - hour: Hour of day (0-23)
+        - day_of_week: Day of week (0-6)
+        - is_weekend: Binary (0/1)
+        - is_business_hours: Binary (9-17 = 1, else 0)
+        - is_private_ip: Binary (10.x.x.x or 192.168.x.x = 1)
+        - activity_length: Length of activity string
+        - has_failed: Binary (contains 'failed')
+        - has_unauthorized: Binary (contains 'unauthorized')
+        - has_injection: Binary (contains 'injection')
+        - is_threat: Binary label (WARNING = 1, INFO = 0)
+        """
+        pass
+    
+    def prepare_ml_features(self, features_df):
+        """
+        Prepare feature matrix and labels.
+        
+        TODO: Implement feature preparation:
+        - Select numerical feature columns
+        - Create X (features) and y (labels)
+        - Handle missing values
+        - Return X, y, feature_names
+        """
+        pass
+    
+    def train_isolation_forest(self, X):
+        """
+        Train Isolation Forest for unsupervised anomaly detection.
+        
+        TODO: Implement training:
+        - Create IsolationForest with contamination=0.1
+        - Fit model on X
+        - Predict anomalies (-1 = anomaly, 1 = normal)
+        - Return model and predictions
+        """
+        pass
+    
+    def train_random_forest(self, X, y):
+        """
+        Train Random Forest classifier for supervised learning.
+        
+        TODO: Implement training:
+        - Split data (70% train, 30% test)
+        - Create RandomForestClassifier
+        - Fit on training data
+        - Predict on test data
+        - Print classification report
+        - Return model and predictions
+        """
+        pass
+    
+    def save_models(self, isolation_forest, random_forest, feature_names):
+        """
+        Save trained models to disk.
+        
+        TODO: Use pickle to save:
+        - isolation_forest to ../models/isolation_forest.pkl
+        - random_forest to ../models/random_forest.pkl
+        - feature_names to ../models/feature_names.pkl
+        """
+        pass
+    
+    def analyze_feature_importance(self, rf_model, feature_names):
+        """
+        Display feature importance from Random Forest.
+        
+        TODO: Implement analysis:
+        - Get feature_importances_ from model
+        - Sort by importance (descending)
+        - Print top 10 features with scores
+        """
+        pass
+
+def main():
+    # TODO: Initialize detector
+    # TODO: Load and preprocess data
+    # TODO: Prepare ML features
+    # TODO: Train both models
+    # TODO: Analyze feature importance
+    # TODO: Save models
+    pass
+
+if __name__ == "__main__":
+    main()
+Step 4.2: Train Models
+cd ~/threat_detection_lab/scripts
+python3 ml_threat_detector.py
+Step 4.3: Create Model Evaluation Script
+Create scripts/model_evaluator.py:
+
+#!/usr/bin/env python3
+import pickle
+import pandas as pd
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+class ModelEvaluator:
+    def __init__(self):
+        self.models = {}
+        
+    def load_models(self):
+        """
+        Load trained models from disk.
+        
+        TODO: Load pickled models:
+        - isolation_forest.pkl
+        - random_forest.pkl
+        - feature_names.pkl
+        """
+        pass
+    
+    def evaluate_on_new_data(self, new_log_file):
+        """
+        Evaluate models on new log data.
+        
+        TODO: Implement evaluation:
+        - Load and preprocess new log file
+        - Extract same features used in training
+        - Predict using both models
+        - Calculate metrics (accuracy, precision, recall, F1)
+        - Display results
+        """
+        pass
+    
+    def predict_single_entry(self, log_entry):
+        """
+        Predict threat for a single log entry.
+        
+        TODO: Implement single prediction:
+        - Parse log entry
+        - Extract features
+        - Use both models to predict
+        - Return prediction and confidence
+        """
+        pass
+
+def main():
+    # TODO: Initialize evaluator
+    # TODO: Load models
+    # TODO: Evaluate on test data
+    pass
+
+if __name__ == "__main__":
+    main()
+Run evaluation:
+
+python3 model_evaluator.py
+Expected Outcomes
+After completing this lab, you should have:
+
+• A working log analysis system that detects anomalies using statistical methods • Real-time monitoring script that alerts on suspicious activities • Trained machine learning models (Isolation Forest and Random Forest) for threat detection • Understanding of feature engineering for security log analysis • Practical experience with anomaly detection algorithms
+
+Key Files Created:
+
+logs/system.log - Sample log data
+scripts/log_analyzer.py - Statistical anomaly detector
+scripts/real_time_monitor.py - Real-time monitoring system
+scripts/ml_threat_detector.py - ML-based threat detector
+models/*.pkl - Trained ML models
+alerts/threat_alerts.log - Generated alerts
+Troubleshooting Tips
+Issue: ModuleNotFoundError for pandas or sklearn
+
+Solution: Ensure packages are installed: pip3 install pandas numpy scikit-learn
+Issue: Log file not found errors
+
+Solution: Verify you're in the correct directory and log file exists: ls -la logs/
+Issue: Real-time monitor not detecting new entries
+
+Solution: Ensure log file is being appended to (not overwritten) and monitor has read permissions
+Issue: ML models show poor performance
+
+Solution: Generate more diverse log data with better separation between normal and suspicious activities. Adjust feature engineering to capture more relevant patterns.
+Conclusion
+This lab introduced fundamental concepts of AI-driven threat detection in cybersecurity. You implemented statistical anomaly detection methods, created real-time monitoring systems, and built machine learning models for automated threat classification. These techniques form the foundation of modern Security Information and Event Management (SIEM) systems.
+
+Key Takeaways:
+
+Statistical methods (mean, standard deviation) effectively detect outliers in log data
+Real-time monitoring requires efficient file reading and pattern matching
+Machine learning models can learn complex threat patterns from labeled data
+Feature engineering is critical for ML model performance in security applications
+Combining multiple detection methods (statistical + ML) improves overall accuracy
+Next Steps: Explore advanced techniques like deep learning for sequence analysis, integrate with real SIEM platforms, or implement distributed log processing for large-scale systems.
