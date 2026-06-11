@@ -1,0 +1,455 @@
+Windows Forensics Automation
+Objectives
+By the end of this lab, students will be able to:
+
+Extract and parse Windows event logs and registry data using Python on Linux
+Create PowerShell scripts for automated forensic data collection and analysis
+Identify suspicious system activity patterns through log correlation
+Generate forensic reports with indicators of compromise (IOCs)
+Develop cross-platform forensic automation workflows
+Prerequisites
+Before starting this lab, students should have:
+
+Basic understanding of Windows system architecture and event logging
+Familiarity with Linux command line and file operations
+Elementary Python programming knowledge
+Basic understanding of Windows Registry structure
+Lab Environment
+Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines with all necessary tools pre-installed. Simply click "Start Lab" to access your dedicated environment.
+
+Your cloud machine includes:
+
+Ubuntu Linux with forensic tools (python-evtx, python-registry)
+Sample Windows forensic artifacts (event logs, registry hives)
+PowerShell Core for cross-platform scripting
+Pre-configured workspace at /home/student/forensics-lab
+Task 1: Extract and Parse Windows Event Logs
+Step 1: Set Up the Forensic Environment
+Navigate to the forensic workspace and examine available samples:
+
+cd /home/student/forensics-lab
+ls -la samples/event-logs/
+ls -la samples/registry-hives/
+Install required Python libraries:
+
+pip3 install python-evtx python-registry
+Step 2: Create Event Log Extraction Script
+Create a Python script to extract Windows event logs from EVTX files:
+
+nano extract_eventlogs.py
+Add the following starter template:
+
+#!/usr/bin/env python3
+import Evtx.Evtx as evtx
+import json
+import sys
+from datetime import datetime
+
+def extract_events(evtx_file, output_file):
+    """
+    Extract events from Windows EVTX file and save to JSON.
+    
+    Args:
+        evtx_file: Path to .evtx file
+        output_file: Path to output JSON file
+    
+    Returns:
+        List of extracted events
+    """
+    events = []
+    
+    # TODO: Open the EVTX file using evtx.Evtx()
+    # TODO: Iterate through records and extract:
+    #       - timestamp
+    #       - event_id
+    #       - computer_name
+    #       - xml content
+    # TODO: Save events to JSON file
+    # TODO: Return the events list
+    
+    pass
+
+def analyze_events(events):
+    """
+    Perform basic statistical analysis on extracted events.
+    
+    Args:
+        events: List of event dictionaries
+    """
+    # TODO: Count total events
+    # TODO: Group events by event_id and count occurrences
+    # TODO: Display top 10 most frequent event IDs
+    # TODO: Identify time range of events
+    
+    pass
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python3 extract_eventlogs.py <input.evtx> <output.json>")
+        sys.exit(1)
+    
+    evtx_file = sys.argv[1]
+    output_file = sys.argv[2]
+    
+    events = extract_events(evtx_file, output_file)
+    analyze_events(events)
+Step 3: Execute Event Log Extraction
+Run your script on sample event logs:
+
+chmod +x extract_eventlogs.py
+cd samples/event-logs/
+
+# Extract System and Security logs
+python3 ../../extract_eventlogs.py System.evtx system_events.json
+python3 ../../extract_eventlogs.py Security.evtx security_events.json
+Expected Output: JSON files containing parsed event data with timestamps, event IDs, and metadata.
+
+Task 2: Extract Windows Registry Information
+Step 1: Create Registry Extraction Script
+Create a script to parse Windows registry hives:
+
+cd /home/student/forensics-lab
+nano extract_registry.py
+Add the starter template:
+
+#!/usr/bin/env python3
+from Registry import Registry
+import json
+import sys
+
+def extract_registry_key(reg_file, key_path, output_file):
+    """
+    Extract specific registry key information.
+    
+    Args:
+        reg_file: Path to registry hive file
+        key_path: Registry key path to extract
+        output_file: Output JSON file path
+    
+    Returns:
+        Dictionary with key data
+    """
+    # TODO: Open registry hive using Registry.Registry()
+    # TODO: Navigate to specified key_path
+    # TODO: Extract subkeys (name, timestamp, counts)
+    # TODO: Extract values (name, type, data)
+    # TODO: Save to JSON file
+    
+    pass
+
+def extract_system_info(system_hive):
+    """
+    Extract system information from SYSTEM hive.
+    
+    Args:
+        system_hive: Path to SYSTEM registry hive
+    
+    Returns:
+        Dictionary with system information
+    """
+    system_info = {
+        'computer_name': '',
+        'current_control_set': '',
+        'services': [],
+        'network_interfaces': []
+    }
+    
+    # TODO: Open SYSTEM hive
+    # TODO: Get current control set from Select\Current
+    # TODO: Extract computer name from ComputerName key
+    # TODO: Enumerate services from Services key
+    # TODO: Extract service DisplayName and Start type
+    # TODO: Return system_info dictionary
+    
+    pass
+
+def extract_software_info(software_hive):
+    """
+    Extract installed software from SOFTWARE hive.
+    
+    Args:
+        software_hive: Path to SOFTWARE registry hive
+    
+    Returns:
+        List of installed applications
+    """
+    # TODO: Open SOFTWARE hive
+    # TODO: Navigate to Microsoft\Windows\CurrentVersion\Uninstall
+    # TODO: Extract DisplayName, DisplayVersion, Publisher for each app
+    # TODO: Return list of applications
+    
+    pass
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python3 extract_registry.py <registry_hive> [key_path]")
+        sys.exit(1)
+    
+    reg_file = sys.argv[1]
+    
+    if "SYSTEM" in reg_file.upper():
+        system_info = extract_system_info(reg_file)
+        # TODO: Save and display system information
+    elif "SOFTWARE" in reg_file.upper():
+        software_info = extract_software_info(reg_file)
+        # TODO: Save and display software information
+    elif len(sys.argv) > 2:
+        key_path = sys.argv[2]
+        extract_registry_key(reg_file, key_path, "registry_output.json")
+Step 2: Execute Registry Extraction
+Run the script on sample registry hives:
+
+cd samples/registry-hives/
+python3 ../../extract_registry.py SYSTEM
+python3 ../../extract_registry.py SOFTWARE
+Expected Output: JSON files containing computer name, services, installed software, and registry key data.
+
+Task 3: Automate Forensics with PowerShell
+Step 1: Install PowerShell Core
+Install PowerShell on Linux:
+
+wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+sudo apt-get update
+sudo apt-get install -y powershell
+
+# Verify installation
+pwsh --version
+Step 2: Create Forensic Automation Script
+Create a PowerShell script for automated analysis:
+
+cd /home/student/forensics-lab
+nano forensic_automation.ps1
+Add the starter template:
+
+#!/usr/bin/env pwsh
+
+param(
+    [string]$DataPath = "./samples",
+    [string]$OutputPath = "./forensic_output"
+)
+
+# Create output directory
+New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
+
+Write-Host "=== Windows Forensics Automation ===" -ForegroundColor Green
+
+function Analyze-EventLogs {
+    param([string]$LogPath)
+    
+    # TODO: Find all JSON event log files in LogPath
+    # TODO: For each file:
+    #       - Load JSON content
+    #       - Count total events
+    #       - Group by event_id and count
+    #       - Identify suspicious event IDs (4624, 4625, 4648, 4672, 7045)
+    #       - Calculate date range
+    # TODO: Save analysis results to output directory
+    
+}
+
+function Analyze-RegistryData {
+    param([string]$RegistryPath)
+    
+    # TODO: Find all JSON registry files
+    # TODO: For each file:
+    #       - Load JSON content
+    #       - Count subkeys and values
+    #       - Search for sensitive keywords (password, key, token)
+    #       - Flag startup/service entries
+    # TODO: Save analysis results
+    
+}
+
+function Generate-Timeline {
+    # TODO: Collect all timestamped events from analysis files
+    # TODO: Sort by timestamp
+    # TODO: Create unified timeline JSON
+    # TODO: Save to forensic_timeline.json
+    
+}
+
+function Create-ForensicReport {
+    # TODO: Generate markdown report with:
+    #       - Summary of files processed
+    #       - Key findings
+    #       - Suspicious activity indicators
+    #       - Recommendations
+    # TODO: Save to forensic_report.md
+    
+}
+
+# Main execution
+try {
+    Analyze-EventLogs -LogPath (Join-Path $DataPath "event-logs")
+    Analyze-RegistryData -RegistryPath (Join-Path $DataPath "registry-hives")
+    Generate-Timeline
+    Create-ForensicReport
+    
+    Write-Host "Analysis complete. Check $OutputPath for results." -ForegroundColor Green
+} catch {
+    Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
+}
+Step 3: Execute PowerShell Automation
+Run the automation script:
+
+pwsh -File forensic_automation.ps1
+Review generated reports:
+
+ls -la forensic_output/
+cat forensic_output/forensic_report.md
+Task 4: Identify Abnormal System Activity
+Step 1: Create Activity Analysis Script
+Create an advanced analysis script to detect anomalies:
+
+nano analyze_activity.py
+Add the starter template:
+
+#!/usr/bin/env python3
+import json
+import os
+from datetime import datetime
+from collections import defaultdict, Counter
+
+class ForensicAnalyzer:
+    def __init__(self, data_dir="./forensic_output"):
+        self.data_dir = data_dir
+        self.anomalies = []
+        
+    def load_analysis_files(self):
+        """Load all analysis JSON files from output directory."""
+        # TODO: Scan data_dir for *_analysis.json files
+        # TODO: Load each JSON file into a dictionary
+        # TODO: Return dictionary of filename -> data
+        pass
+    
+    def detect_high_frequency_events(self, analysis_data):
+        """Detect events occurring at unusually high frequency."""
+        # TODO: For each analysis file, check TopEventIDs
+        # TODO: Flag events with count > 1000 as high frequency
+        # TODO: Classify severity (High if > 5000, Medium otherwise)
+        # TODO: Add to self.anomalies list
+        pass
+    
+    def detect_off_hours_activity(self, analysis_data):
+        """Detect activity outside normal business hours (6 AM - 10 PM)."""
+        # TODO: Parse DateRange from analysis files
+        # TODO: Check if timestamps fall outside 6:00-22:00
+        # TODO: Flag as Medium severity anomaly
+        pass
+    
+    def detect_suspicious_registry_values(self, analysis_data):
+        """Identify registry values with sensitive keywords."""
+        # TODO: Check InterestingValues in registry analysis
+        # TODO: Flag values containing: password, secret, key, token
+        # TODO: Mark as High severity
+        pass
+    
+    def analyze_user_behavior(self, analysis_data):
+        """Analyze patterns in user/computer activity."""
+        # TODO: Group events by computer name
+        # TODO: Count events per computer
+        # TODO: Flag computers with > 50 suspicious events
+        pass
+    
+    def generate_ioc_report(self):
+        """Generate Indicators of Compromise report."""
+        ioc_report = {
+            'timestamp': datetime.now().isoformat(),
+            'total_anomalies': len(self.anomalies),
+            'high_severity': 0,
+            'medium_severity': 0,
+            'anomalies': self.anomalies,
+            'recommendations': []
+        }
+        
+        # TODO: Count anomalies by severity
+        # TODO: Generate recommendations based on findings
+        # TODO: Save report to JSON file
+        # TODO: Return report dictionary
+        
+        pass
+    
+    def create_visual_summary(self, ioc_report):
+        """Display text-based summary of findings."""
+        # TODO: Print formatted summary with:
+        #       - Total anomalies
+        #       - Severity breakdown
+        #       - Top 10 anomalies with details
+        #       - Recommendations
+        pass
+
+def main():
+    analyzer = ForensicAnalyzer()
+    
+    # TODO: Load analysis files
+    # TODO: Run all detection methods
+    # TODO: Generate IOC report
+    # TODO: Display visual summary
+    # TODO: Save report to file
+
+if __name__ == "__main__":
+    main()
+Step 2: Execute Activity Analysis
+Run the analysis script:
+
+chmod +x analyze_activity.py
+python3 analyze_activity.py
+Step 3: Review Findings
+Examine the generated IOC report:
+
+cat forensic_output/ioc_report.json
+Key indicators to investigate:
+
+Event ID 4625: Failed login attempts (potential brute force)
+Event ID 4672: Special privileges assigned (privilege escalation)
+Event ID 7045: New service installed (potential malware)
+Event ID 1102: Audit log cleared (anti-forensics)
+Off-hours activity patterns
+Suspicious registry modifications
+Expected Outcomes
+Upon completing this lab, you should have:
+
+Extracted forensic artifacts: JSON files containing parsed event logs and registry data
+Automated analysis scripts: Python and PowerShell scripts for forensic processing
+Anomaly detection: Identified suspicious patterns and high-frequency events
+IOC report: Comprehensive report with indicators of compromise
+Forensic timeline: Chronological view of system events
+Sample output structure:
+
+forensic_output/
+├── system_events_analysis.json
+├── security_events_analysis.json
+├── registry_analysis.json
+├── forensic_timeline.json
+├── ioc_report.json
+└── forensic_report.md
+Troubleshooting Tips
+Issue: ModuleNotFoundError: No module named 'Evtx'
+
+Solution: Install python-evtx: pip3 install python-evtx
+Issue: Registry parsing fails with "Key not found"
+
+Solution: Verify key path syntax uses backslashes. Check if key exists in hive using Registry.Registry(file).open(path)
+Issue: PowerShell script execution fails
+
+Solution: Ensure PowerShell Core is installed. Run with explicit path: pwsh -File script.ps1
+Issue: JSON parsing errors in analysis
+
+Solution: Validate JSON syntax. Check for incomplete extractions. Use jq to validate: jq . file.json
+Conclusion
+This lab introduced Windows forensics automation using cross-platform tools. You learned to extract and parse Windows event logs and registry data on Linux, automate analysis with PowerShell scripts, and identify suspicious activity patterns. These skills are essential for incident response, security investigations, and digital forensics.
+
+Key takeaways:
+
+Event logs provide detailed system activity records
+Registry hives contain configuration and persistence mechanisms
+Automation reduces manual analysis time and improves consistency
+Anomaly detection requires baseline understanding of normal behavior
+Cross-platform tools enable forensics without Windows dependencies
+Next steps:
+
+Enhance scripts to parse additional artifacts (prefetch, MFT, browser history)
+Implement machine learning for anomaly detection
+Create automated reporting dashboards
+Practice on real-world forensic challenges and CTF scenarios
