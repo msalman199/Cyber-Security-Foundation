@@ -1,0 +1,226 @@
+Basic Incident Response Simulation
+Lab Overview
+This lab introduces fundamental incident response procedures through a simulated security breach scenario. You will learn to identify indicators of compromise, contain threats, and collect forensic evidence using industry-standard tools and techniques.
+
+Objectives
+By completing this lab, you will be able to:
+
+Identify common indicators of compromise (IoCs) on a Linux system
+Implement basic containment measures to prevent threat spread
+Create and execute scripts to collect forensic data
+Document incident response activities following best practices
+Analyze system logs and process information for suspicious activity
+Prerequisites
+Before starting this lab, you should have:
+
+Basic Linux command-line navigation skills
+Understanding of file permissions and ownership
+Familiarity with text editors (nano or vi)
+Basic knowledge of Linux processes and networking concepts
+Ability to read and interpret log files
+Environment Setup
+When you click the Start Lab button, you will receive access to a bare-metal Linux cloud machine. All tools and configurations will be installed during the lab exercises.
+
+Initial System Preparation
+First, update your system and install necessary tools:
+
+# Update package repositories
+sudo apt update
+
+# Install forensic and analysis tools
+sudo apt install -y netstat-nat tcpdump aide chkrootkit
+
+# Verify installation
+which tcpdump aide chkrootkit
+Exercise 1: Identifying Indicators of Compromise
+Step 1: Check for Suspicious Processes
+# List all running processes with full details
+ps aux | less
+
+# Look for processes with unusual names or high CPU usage
+ps aux --sort=-%cpu | head -20
+
+# Check for processes running as root
+ps aux | grep root
+Step 2: Examine Network Connections
+# Display all active network connections
+sudo netstat -tulpn
+
+# Look for established connections to unknown IPs
+sudo netstat -antp | grep ESTABLISHED
+
+# Check listening ports
+sudo ss -tulpn
+Step 3: Review Authentication Logs
+# Check for failed login attempts
+sudo grep "Failed password" /var/log/auth.log | tail -20
+
+# Look for successful root logins
+sudo grep "session opened for user root" /var/log/auth.log
+
+# Review recent sudo usage
+sudo grep "sudo:" /var/log/auth.log | tail -20
+Exercise 2: Implementing Containment Measures
+Step 1: Isolate Suspicious Processes
+# Kill a suspicious process (replace PID with actual process ID)
+sudo kill -9 [PID]
+
+# Disable suspicious services
+sudo systemctl stop [service_name]
+sudo systemctl disable [service_name]
+Step 2: Block Network Communication
+# Block outbound connections to suspicious IP
+sudo iptables -A OUTPUT -d [SUSPICIOUS_IP] -j DROP
+
+# Block incoming connections from suspicious IP
+sudo iptables -A INPUT -s [SUSPICIOUS_IP] -j DROP
+
+# Save iptables rules
+sudo iptables-save > /tmp/firewall_rules_backup.txt
+Step 3: Preserve User Accounts
+# Lock suspicious user accounts
+sudo usermod -L [username]
+
+# Disable password authentication
+sudo passwd -l [username]
+
+# Review active user sessions
+who
+w
+Exercise 3: Forensic Data Collection
+Step 1: Create Collection Script
+Create a forensic collection script:
+
+#!/bin/bash
+# Incident Response Data Collection Script
+
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+OUTPUT_DIR="/tmp/ir_collection_${TIMESTAMP}"
+
+mkdir -p ${OUTPUT_DIR}
+
+echo "Starting forensic data collection..."
+
+# Collect system information
+uname -a > ${OUTPUT_DIR}/system_info.txt
+hostname >> ${OUTPUT_DIR}/system_info.txt
+uptime >> ${OUTPUT_DIR}/system_info.txt
+
+# Collect process information
+ps auxf > ${OUTPUT_DIR}/processes.txt
+
+# Collect network information
+sudo netstat -antp > ${OUTPUT_DIR}/network_connections.txt
+sudo ss -tulpn > ${OUTPUT_DIR}/listening_ports.txt
+
+# Collect user information
+who > ${OUTPUT_DIR}/logged_in_users.txt
+last -20 > ${OUTPUT_DIR}/recent_logins.txt
+
+# Collect authentication logs
+sudo cp /var/log/auth.log ${OUTPUT_DIR}/auth.log
+
+# Create archive
+tar -czf ${OUTPUT_DIR}.tar.gz ${OUTPUT_DIR}
+
+echo "Collection complete: ${OUTPUT_DIR}.tar.gz"
+Step 2: Execute Collection Script
+# Save the script
+nano collect_evidence.sh
+
+# Make executable
+chmod +x collect_evidence.sh
+
+# Run the script
+sudo ./collect_evidence.sh
+Step 3: Hash Evidence Files
+# Create cryptographic hashes for evidence integrity
+sha256sum /tmp/ir_collection_*.tar.gz > evidence_hashes.txt
+
+# Display the hash
+cat evidence_hashes.txt
+Exercise 4: Log Analysis
+Step 1: Analyze System Logs
+# Search for suspicious commands in bash history
+cat ~/.bash_history | grep -E "(wget|curl|nc|nmap)"
+
+# Review system log for errors
+sudo grep -i error /var/log/syslog | tail -50
+
+# Check kernel messages
+sudo dmesg | grep -i error
+Step 2: Timeline Creation
+# Create a timeline of recent file modifications
+find /home -type f -mtime -1 -ls > /tmp/recent_file_changes.txt
+
+# Check recently modified system files
+find /etc -type f -mtime -1 -ls > /tmp/recent_etc_changes.txt
+Step 3: Search for Malicious Indicators
+# Search for suspicious files
+sudo find / -name "*.sh" -type f -mtime -1 2>/dev/null
+
+# Look for SUID binaries
+sudo find / -perm -4000 -type f 2>/dev/null
+
+# Check for hidden files in unusual locations
+sudo find /tmp /var/tmp -name ".*" -type f 2>/dev/null
+Exercise 5: Documentation
+Incident Report Template
+Create an incident report documenting your findings:
+
+# Incident Response Report
+
+**Incident ID:** IR-[DATE]-001
+**Date/Time Detected:** [TIMESTAMP]
+**Analyst:** [YOUR NAME]
+**Severity:** [HIGH/MEDIUM/LOW]
+
+## Executive Summary
+[Brief description of the incident]
+
+## Indicators of Compromise
+- Suspicious Process: [DETAILS]
+- Network Connection: [DETAILS]
+- File Modifications: [DETAILS]
+
+## Containment Actions Taken
+1. [ACTION 1]
+2. [ACTION 2]
+3. [ACTION 3]
+
+## Evidence Collected
+- Location: /tmp/ir_collection_[TIMESTAMP].tar.gz
+- Hash: [SHA256 HASH]
+
+## Timeline of Events
+- [TIME] - [EVENT]
+- [TIME] - [EVENT]
+
+## Recommendations
+1. [RECOMMENDATION]
+2. [RECOMMENDATION]
+
+## Next Steps
+- [ ] Complete malware analysis
+- [ ] Review firewall rules
+- [ ] Update security policies
+Lab Cleanup
+After completing the lab:
+
+# Remove collected evidence (if instructed)
+sudo rm -rf /tmp/ir_collection_*
+
+# Reset iptables rules (if in test environment)
+sudo iptables -F
+
+# Document all actions taken
+Key Takeaways
+Always preserve evidence integrity using cryptographic hashes
+Document every action taken during incident response
+Follow the containment-first approach to prevent threat spread
+Collect forensic data before making system changes
+Maintain a chain of custody for all evidence
+Additional Resources
+NIST Computer Security Incident Handling Guide (SP 800-61)
+SANS Incident Handler's Handbook
+Linux Forensics Tools Repository
